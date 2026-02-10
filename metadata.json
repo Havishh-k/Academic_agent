@@ -1,0 +1,5 @@
+{
+  "name": "Academic Agent",
+  "description": "A governed learning companion for CS101 students, providing strict curriculum-based guidance and faculty insights.",
+  "requestFramePermissions": []
+}

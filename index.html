@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CS101 Academic Agent</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              academic: {
+                50: '#f0f4f8',
+                100: '#d9e2ec',
+                200: '#bcccdc',
+                300: '#9fb3c8',
+                400: '#829ab1',
+                500: '#627d98',
+                600: '#486581',
+                700: '#334e68',
+                800: '#243b53',
+                900: '#102a43',
+              },
+              primary: {
+                50: '#eff6ff',
+                100: '#dbeafe',
+                200: '#bfdbfe',
+                300: '#93c5fd',
+                400: '#60a5fa',
+                500: '#3b82f6',
+                600: '#2563eb',
+                700: '#1d4ed8',
+                800: '#1e40af',
+                900: '#1e3a8a',
+              }
+            },
+            fontFamily: {
+              sans: ['Inter', 'system-ui', 'sans-serif'],
+              serif: ['Merriweather', 'serif'],
+              mono: ['JetBrains Mono', 'Menlo', 'monospace'],
+            },
+            animation: {
+              'fade-in': 'fadeIn 0.3s ease-out forwards',
+              'slide-in': 'slideIn 0.3s ease-out forwards',
+            },
+            keyframes: {
+              fadeIn: {
+                '0%': { opacity: '0', transform: 'translateY(10px)' },
+                '100%': { opacity: '1', transform: 'translateY(0)' },
+              },
+              slideIn: {
+                '0%': { opacity: '0', transform: 'translateX(-10px)' },
+                '100%': { opacity: '1', transform: 'translateX(0)' },
+              }
+            }
+          },
+        },
+      }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Merriweather:wght@300;400;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+      body {
+        font-family: 'Inter', sans-serif;
+      }
+      
+      /* Custom Scrollbar */
+      ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 3px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+      }
+
+      /* Markdown Styles */
+      .markdown-body h1, .markdown-body h2, .markdown-body h3 {
+        font-family: 'Merriweather', serif;
+        font-weight: 700;
+        margin-top: 1.25em;
+        margin-bottom: 0.75em;
+        color: #102a43;
+      }
+      .markdown-body p {
+        margin-bottom: 1em;
+        line-height: 1.7;
+      }
+      .markdown-body ul {
+        list-style-type: disc;
+        padding-left: 1.25rem;
+        margin-bottom: 1em;
+      }
+      .markdown-body ol {
+        list-style-type: decimal;
+        padding-left: 1.25rem;
+        margin-bottom: 1em;
+      }
+      .markdown-body li {
+        margin-bottom: 0.25em;
+      }
+      .markdown-body blockquote {
+        border-left: 3px solid #3b82f6;
+        padding-left: 1rem;
+        font-style: italic;
+        color: #486581;
+        background-color: #f0f4f8;
+        padding-top: 0.5rem;
+        padding-bottom: 0.5rem;
+        border-radius: 0 0.25rem 0.25rem 0;
+        margin-bottom: 1em;
+      }
+      .markdown-body code {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.85em;
+        background-color: rgba(0,0,0,0.05);
+        padding: 0.2em 0.4em;
+        border-radius: 0.25rem;
+      }
+      .markdown-body pre {
+        background-color: #102a43;
+        color: #f0f4f8;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        overflow-x: auto;
+        margin-bottom: 1em;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      }
+      .markdown-body pre code {
+        background-color: transparent;
+        padding: 0;
+        color: inherit;
+      }
+      .markdown-body strong {
+        font-weight: 600;
+        color: #102a43;
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@^19.2.4",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
+    "react/": "https://esm.sh/react@^19.2.4/",
+    "@google/genai": "https://esm.sh/@google/genai@^1.40.0",
+    "react-markdown": "https://esm.sh/react-markdown@^10.1.0"
+  }
+}
+</script>
+</head>
+  <body class="bg-gray-50 h-screen overflow-hidden text-gray-800 antialiased selection:bg-blue-100 selection:text-blue-900">
+    <div id="root" class="h-full"></div>
+  </body>
+</html>

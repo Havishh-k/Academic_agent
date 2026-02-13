@@ -11,7 +11,7 @@ const OnboardingOverlay: React.FC<OnboardingOverlayProps> = ({ role, onComplete 
 
   const studentSteps = [
     {
-      title: "Welcome to CS101",
+      title: "Welcome to AI101",
       description: "Your dedicated AI learning companion is here to help you master the course material.",
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-12 h-12 text-primary-600">
@@ -34,7 +34,7 @@ const OnboardingOverlay: React.FC<OnboardingOverlayProps> = ({ role, onComplete 
       description: "I won't just give you the answers. I'll help you think through problems step-by-step to build your understanding.",
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-12 h-12 text-primary-600">
-           <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
         </svg>
       )
     }
@@ -43,7 +43,7 @@ const OnboardingOverlay: React.FC<OnboardingOverlayProps> = ({ role, onComplete 
   const facultySteps = [
     {
       title: "Faculty Control Center",
-      description: "Welcome to your command center for CS101. Monitor and guide the AI agent's interactions with your students.",
+      description: "Welcome to your command center for AI101. Monitor and guide the AI agent's interactions with your students.",
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-12 h-12 text-amber-600">
           <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
@@ -81,36 +81,36 @@ const OnboardingOverlay: React.FC<OnboardingOverlayProps> = ({ role, onComplete 
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-academic-900/60 backdrop-blur-sm animate-fade-in p-4">
       <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden relative border border-white/20">
         <div className="p-6 md:p-8 text-center flex flex-col items-center">
-            <div key={step} className="animate-fade-in flex flex-col items-center w-full">
-                <div className={`w-24 h-24 rounded-full bg-academic-50 flex items-center justify-center mb-6`}>
-                    {currentStepData.icon}
-                </div>
-                
-                <h2 className="text-2xl font-serif font-bold text-academic-900 mb-4">{currentStepData.title}</h2>
-                <p className="text-academic-600 mb-8 leading-relaxed h-20">{currentStepData.description}</p>
-            </div>
-            
-            <div className="flex justify-center gap-2 mb-8">
-                {steps.map((_, i) => (
-                    <div 
-                        key={i} 
-                        className={`h-2 rounded-full transition-all duration-300 ${i === step ? `w-8 ${role === UserRole.STUDENT ? 'bg-primary-500' : 'bg-amber-500'}` : 'w-2 bg-academic-200'}`}
-                    />
-                ))}
+          <div key={step} className="animate-fade-in flex flex-col items-center w-full">
+            <div className={`w-24 h-24 rounded-full bg-academic-50 flex items-center justify-center mb-6`}>
+              {currentStepData.icon}
             </div>
 
-            <button
-                onClick={() => {
-                    if (isLastStep) {
-                        onComplete();
-                    } else {
-                        setStep(step + 1);
-                    }
-                }}
-                className={`w-full py-3.5 px-6 rounded-xl text-white font-semibold transition-all shadow-lg shadow-academic-900/10 active:scale-95 ${buttonBg}`}
-            >
-                {isLastStep ? "Get Started" : "Next"}
-            </button>
+            <h2 className="text-2xl font-serif font-bold text-academic-900 mb-4">{currentStepData.title}</h2>
+            <p className="text-academic-600 mb-8 leading-relaxed h-20">{currentStepData.description}</p>
+          </div>
+
+          <div className="flex justify-center gap-2 mb-8">
+            {steps.map((_, i) => (
+              <div
+                key={i}
+                className={`h-2 rounded-full transition-all duration-300 ${i === step ? `w-8 ${role === UserRole.STUDENT ? 'bg-primary-500' : 'bg-amber-500'}` : 'w-2 bg-academic-200'}`}
+              />
+            ))}
+          </div>
+
+          <button
+            onClick={() => {
+              if (isLastStep) {
+                onComplete();
+              } else {
+                setStep(step + 1);
+              }
+            }}
+            className={`w-full py-3.5 px-6 rounded-xl text-white font-semibold transition-all shadow-lg shadow-academic-900/10 active:scale-95 ${buttonBg}`}
+          >
+            {isLastStep ? "Get Started" : "Next"}
+          </button>
         </div>
       </div>
     </div>

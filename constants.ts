@@ -3,52 +3,52 @@ import { CourseDocument, CurriculumUnit } from './types';
 export const CURRICULUM_DATA: CurriculumUnit[] = [
   {
     id: 'unit_1',
-    title: 'Unit I: Introduction to Computer Systems',
+    title: 'Unit I: Introduction & Foundations of AI',
     topics: [
-      { id: 'u1_history', title: 'History and evolution of computers' },
-      { id: 'u1_types', title: 'Types of computers' },
-      { id: 'u1_components', title: 'Hardware and software components' },
-      { id: 'u1_software', title: 'System software and application software' },
+      { id: 'u1_history', title: 'History and evolution of AI' },
+      { id: 'u1_goals', title: 'Goals and applications of AI' },
+      { id: 'u1_turing', title: 'Turing Test and Chinese Room experiment' },
+      { id: 'u1_foundations', title: 'Foundations: philosophy, math, neuroscience' },
     ]
   },
   {
     id: 'unit_2',
-    title: 'Unit II: Problem Solving and Algorithms',
+    title: 'Unit II: Intelligent Agents',
     topics: [
-      { id: 'u2_techniques', title: 'Problem-solving techniques' },
-      { id: 'u2_algo_def', title: 'Algorithms: definition and characteristics' },
-      { id: 'u2_flowcharts', title: 'Flowcharts and pseudocode' },
-      { id: 'u2_thinking', title: 'Introduction to computational thinking' },
+      { id: 'u2_agents', title: 'Agent and environment concepts' },
+      { id: 'u2_peas', title: 'PEAS framework' },
+      { id: 'u2_types', title: 'Agent types: reflex, model-based, goal-based, utility-based' },
+      { id: 'u2_env', title: 'Task environment properties' },
     ]
   },
   {
     id: 'unit_3',
-    title: 'Unit III: Programming Fundamentals',
+    title: 'Unit III: Problem Solving & Uninformed Search',
     topics: [
-      { id: 'u3_intro', title: 'Introduction to programming languages' },
-      { id: 'u3_variables', title: 'Variables, data types, and operators' },
-      { id: 'u3_io', title: 'Input and output statements' },
-      { id: 'u3_conditional', title: 'Conditional statements (if, if-else, switch)' },
+      { id: 'u3_problem', title: 'Problem formulation and state space' },
+      { id: 'u3_bfs', title: 'Breadth-First Search (BFS)' },
+      { id: 'u3_dfs', title: 'Depth-First Search (DFS) & Uniform Cost Search' },
+      { id: 'u3_iddfs', title: 'DLS, IDDFS & Bidirectional Search' },
     ]
   },
   {
     id: 'unit_4',
-    title: 'Unit IV: Control Structures',
+    title: 'Unit IV: Informed (Heuristic) Search',
     topics: [
-      { id: 'u4_loops', title: 'Looping constructs (for, while, do-while)' },
-      { id: 'u4_nested', title: 'Nested loops' },
-      { id: 'u4_break', title: 'Break and continue statements' },
-      { id: 'u4_debug', title: 'Basic debugging techniques' },
+      { id: 'u4_greedy', title: 'Greedy Best-First Search' },
+      { id: 'u4_astar', title: 'A* Search Algorithm' },
+      { id: 'u4_ida', title: 'IDA* Algorithm' },
+      { id: 'u4_heuristics', title: 'Admissible and consistent heuristics' },
     ]
   },
   {
     id: 'unit_5',
-    title: 'Unit V: Introduction to Data Structures',
+    title: 'Unit V: Adversarial Search & Games',
     topics: [
-      { id: 'u5_arrays', title: 'Arrays and strings' },
-      { id: 'u5_functions', title: 'Basic concepts of functions' },
-      { id: 'u5_lists', title: 'Introduction to lists and tuples' },
-      { id: 'u5_stacks', title: 'Overview of stacks and queues' },
+      { id: 'u5_minimax', title: 'Minimax algorithm' },
+      { id: 'u5_alphabeta', title: 'Alpha-Beta Pruning' },
+      { id: 'u5_stochastic', title: 'Stochastic Games & Expectiminimax' },
+      { id: 'u5_modern', title: 'Monte Carlo Tree Search & modern AI (AlphaGo)' },
     ]
   }
 ];
@@ -56,138 +56,190 @@ export const CURRICULUM_DATA: CurriculumUnit[] = [
 export const COURSE_DOCUMENTS: CourseDocument[] = [
   {
     id: 'syllabus',
-    title: 'Syllabus CS101',
-    content: `Course Code: CS101  
-Course Title: Introduction to Computer Science  
+    title: 'Syllabus AI101',
+    content: `Course Code: AI101  
+Course Title: Artificial Intelligence  
+Faculty: Prof. Omprakash  
+Department: Computer Science — Second Year, Semester 4  
 
 Course Description:  
-This course provides an introduction to the fundamental concepts of computer science. It covers problem-solving techniques, algorithmic thinking, basic programming concepts, data representation, and an overview of computer systems. The course is designed for beginners with no prior programming experience.
+This course provides an in-depth introduction to Artificial Intelligence, covering foundational concepts, intelligent agent design, problem-solving through search strategies, and adversarial game-playing algorithms. Students will learn both theoretical underpinnings and practical applications of AI techniques.
 
 Course Objectives:  
-- To understand the basic principles of computer science  
-- To develop logical and algorithmic problem-solving skills  
-- To gain familiarity with programming fundamentals  
-- To understand how data is represented and processed in computers  
-- To introduce foundational concepts used in advanced computing subjects  
+- To understand the foundations, goals, and history of Artificial Intelligence  
+- To learn about intelligent agents and their interaction with environments  
+- To master uninformed and informed search strategies  
+- To understand adversarial search and game-playing algorithms  
+- To explore modern AI systems and state-of-the-art techniques  
 
 Course Outcomes:  
 By the end of this course, students will be able to:  
-- Explain core computer science concepts and terminology  
-- Design simple algorithms using flowcharts and pseudocode  
-- Write basic programs using a high-level programming language  
-- Apply conditional statements and loops to solve problems  
-- Understand basic data structures and their applications  
+- Define AI and explain its foundational principles and the Turing Test  
+- Design and classify intelligent agents using the PEAS framework  
+- Apply BFS, DFS, UCS, IDDFS, A*, and IDA* to solve search problems  
+- Implement Minimax, Alpha-Beta Pruning, and Expectiminimax for game-playing  
+- Analyze and compare the efficiency of different search strategies  
 
-Unit I: Introduction to Computer Systems  
-- History and evolution of computers  
-- Types of computers  
-- Hardware and software components  
-- System software and application software  
+Unit I: Introduction & Foundations of AI  
+- History and evolution of AI  
+- Goals and applications of AI  
+- Turing Test and Chinese Room experiment  
+- Foundations: philosophy, mathematics, economics, neuroscience, linguistics  
 
-Unit II: Problem Solving and Algorithms  
-- Problem-solving techniques  
-- Algorithms: definition and characteristics  
-- Flowcharts and pseudocode  
-- Introduction to computational thinking  
+Unit II: Intelligent Agents  
+- Agent and environment concepts  
+- PEAS framework (Performance, Environment, Actuators, Sensors)  
+- Types of agents: simple reflex, model-based reflex, goal-based, utility-based  
+- Task environment properties: observable, deterministic, episodic, static, discrete, single/multi-agent  
+- Agent program structures  
 
-Unit III: Programming Fundamentals  
-- Introduction to programming languages  
-- Variables, data types, and operators  
-- Input and output statements  
-- Conditional statements (if, if-else, switch)  
+Unit III: Problem Solving & Uninformed Search  
+- Components of a well-defined problem: initial state, actions, transition model, goal test, path cost  
+- Breadth-First Search (BFS): algorithm, completeness, optimality, complexity  
+- Depth-First Search (DFS): algorithm, backtracking, properties  
+- Uniform Cost Search (UCS): expanding cheapest node first  
+- Depth-Limited Search (DLS) and Iterative Deepening DFS (IDDFS)  
+- Bidirectional Search  
 
-Unit IV: Control Structures  
-- Looping constructs (for, while, do-while)  
-- Nested loops  
-- Break and continue statements  
-- Basic debugging techniques  
+Unit IV: Informed (Heuristic) Search  
+- Heuristic evaluation functions h(n)  
+- Greedy Best-First Search: properties, advantages, limitations  
+- A* Search: f(n) = g(n) + h(n), admissible and consistent heuristics, optimality proof  
+- IDA* (Iterative Deepening A*): combining A* optimality with linear space  
 
-Unit V: Introduction to Data Structures  
-- Arrays and strings  
-- Basic concepts of functions  
-- Introduction to lists and tuples (if applicable)  
-- Overview of stacks and queues  
+Unit V: Adversarial Search & Games  
+- Game trees and two-player zero-sum games  
+- Minimax algorithm: complete game tree evaluation  
+- Alpha-Beta Pruning: branch elimination, move ordering effectiveness  
+- Stochastic Games: chance nodes, Expectiminimax algorithm  
+- Partially observable games  
+- Monte Carlo Tree Search and modern game-playing AI (AlphaGo, Stockfish)  
 
 Teaching Methodology:  
-Lectures, practical demonstrations, hands-on programming exercises, assignments, and quizzes.
+Lectures, problem-solving sessions, algorithm trace-throughs, interactive demonstrations, and assignments.
 
 Assessment and Evaluation:  
-- Internal assessments (quizzes, assignments, practicals)  
+- Internal assessments (quizzes, assignments, algorithm trace exercises)  
 - Mid-term examination  
 - End-semester examination  
 
 Recommended Textbooks:  
-- Introduction to Computer Science using Python – Charles Dierbach  
-- Computer Science: An Overview – J. Glenn Brookshear  
+- Artificial Intelligence: A Modern Approach – Stuart Russell & Peter Norvig  
+- Artificial Intelligence – Elaine Rich & Kevin Knight  
 
 Reference Materials:  
-- Online programming documentation  
-- Instructor-provided lecture notes  
-- Educational coding platforms  
+- Instructor-provided lecture notes (L1–L15)  
+- Online AI course resources  
+- Research papers on game-playing AI systems  
 
 Prerequisites:  
-None`
+Data Structures, Discrete Mathematics`
   },
   {
     id: 'lecture_notes',
-    title: 'Lecture Notes (Week 1-5)',
-    content: `Week 1: Introduction to Computer Science  
-- Definition of computer science  
-- Applications of computers in daily life  
-- Components of a computer system: input devices, output devices, CPU, memory  
-- Hardware vs software  
-- Types of software: system software and application software  
+    title: 'Lecture Notes (L1–L15)',
+    content: `L1: Introduction & Course Overview  
+- Definition and scope of Artificial Intelligence  
+- Brief history: Dartmouth Conference, AI winters and resurgence  
+- Current applications: NLP, computer vision, robotics, game playing  
 
-Week 2: Computer Fundamentals  
-- Generations of computers  
-- Classification of computers: supercomputers, mainframes, minicomputers, microcomputers  
-- Operating systems: functions and examples  
-- Basics of file systems  
-- Introduction to open-source and proprietary software  
+L2: Foundations of AI  
+- Philosophical foundations: rationality, consciousness, strong vs weak AI  
+- Mathematical foundations: logic, probability, computation  
+- Turing Test and its criticisms  
+- Chinese Room argument  
 
-Week 3: Problem Solving and Algorithms  
-- Understanding a problem statement  
-- Steps in problem solving  
-- Definition of algorithm  
-- Characteristics of a good algorithm: finiteness, definiteness, effectiveness  
-- Examples of simple algorithms  
-- Introduction to flowcharts and standard symbols  
+L3: Agent and Environment  
+- Definition of an intelligent agent  
+- Agent function vs agent program  
+- Rationality and performance measures  
+- PEAS framework with examples  
 
-Week 4: Programming Basics  
-- Introduction to programming languages  
-- Types of programming languages: low-level and high-level  
-- Introduction to Python / C (generic programming concepts)  
-- Variables and constants  
-- Data types: integer, float, character, string, boolean  
-- Operators: arithmetic, relational, logical  
+L4: Task Environments & Agent Structures  
+- Environment properties: fully/partially observable, deterministic/stochastic, episodic/sequential, static/dynamic, discrete/continuous, single/multi-agent  
+- Agent types: simple reflex, model-based reflex, goal-based, utility-based, learning agents  
 
-Week 5: Control Structures  
-- Conditional statements: if, if-else, nested if  
-- Looping constructs: for loop, while loop  
-- Difference between entry-controlled and exit-controlled loops  
-- Use of break and continue  
-- Common programming errors and debugging basics`
+L5: Components of a Problem  
+- Problem formulation: initial state, actions, transition model, goal test, path cost  
+- State space representation  
+- Examples: 8-puzzle, route finding, 8-queens problem  
+
+L6: Breadth-First Search (BFS)  
+- Algorithm: FIFO queue expansion  
+- Properties: complete (finite branching), optimal (unit cost), time O(b^d), space O(b^d)  
+- Step-by-step trace examples  
+
+L7: Depth-First Search & Uniform Cost Search  
+- DFS: LIFO stack, backtracking, not complete in infinite spaces, not optimal  
+- Time O(b^m), space O(bm)  
+- UCS: priority queue by path cost g(n), complete and optimal  
+
+L8: DLS, IDDFS & Bidirectional Search  
+- Depth-Limited Search: DFS with depth cutoff l  
+- IDDFS: combines BFS completeness with DFS space efficiency, O(b^d) time, O(bd) space  
+- Bidirectional search: two simultaneous searches, O(b^(d/2)) time  
+
+L9: Greedy Best-First Search  
+- Heuristic function h(n): estimated cost to goal  
+- Expands node with lowest h(n)  
+- Not optimal, not always complete  
+- Examples with straight-line distance heuristic  
+
+L10: A* Search Algorithm  
+- Evaluation function f(n) = g(n) + h(n)  
+- Admissible heuristic: h(n) ≤ true cost  
+- Consistent heuristic: h(n) ≤ c(n,a,n') + h(n')  
+- A* is optimal and complete with admissible heuristics  
+- Proof of optimality  
+
+L11: IDA* Algorithm  
+- Iterative deepening with f-cost threshold  
+- Combines A* optimality with linear space O(bd)  
+- Threshold updates and search iterations  
+
+L12: Adversarial Search & Minimax  
+- Two-player zero-sum games  
+- Game tree: MAX and MIN players  
+- Minimax algorithm: recursive evaluation  
+- Properties: complete, optimal against optimal opponent, O(b^m) time, O(bm) space  
+
+L13: Alpha-Beta Pruning  
+- Alpha: best value MAX can guarantee  
+- Beta: best value MIN can guarantee  
+- Pruning rule: prune when alpha ≥ beta  
+- Move ordering: ideal case reduces to O(b^(m/2))  
+- Examples with game tree traces  
+
+L14: Stochastic Games  
+- Chance nodes for probabilistic outcomes  
+- Expectiminimax: expected utility computation  
+- Complexity increases due to chance nodes  
+- Examples: Backgammon, card games  
+
+L15: Partial Observation & State-of-the-Art Games  
+- Partially observable games: belief states  
+- Monte Carlo Tree Search (MCTS)  
+- AlphaGo and AlphaZero: neural networks + MCTS  
+- Modern chess engines: Stockfish, Leela Chess Zero  
+- Current frontiers in game-playing AI`
   },
   {
     id: 'textbook',
-    title: 'Textbook Chapter Summaries',
-    content: `Chapter 1: Introduction to Computers  
-This chapter explains the concept of computers, their evolution, and their role in modern society. It discusses the basic organization of a computer system and the interaction between hardware and software components.
+    title: 'Textbook Chapter Summaries (AIMA)',
+    content: `Chapter 1: Introduction to AI  
+This chapter defines Artificial Intelligence through four approaches: thinking humanly, thinking rationally, acting humanly (Turing Test), and acting rationally (rational agents). It traces the history of AI from its philosophical roots through the Dartmouth Conference to modern breakthroughs.
 
-Chapter 2: Data and Information  
-This chapter focuses on the difference between data and information. It introduces number systems, data representation, and the importance of accuracy and processing in computing systems.
+Chapter 2: Intelligent Agents  
+This chapter formalizes the concept of agents and environments. It defines rational agents, introduces the PEAS description, classifies task environments, and describes five basic agent architectures from simple reflex to learning agents.
 
-Chapter 3: Problem Solving Using Computers  
-This chapter introduces structured problem-solving approaches. It explains algorithms, flowcharts, and pseudocode as tools to represent solutions before coding.
+Chapter 3: Solving Problems by Searching  
+This chapter covers problem formulation, state spaces, and uninformed search strategies (BFS, UCS, DFS, DLS, IDDFS, Bidirectional Search). It analyzes each strategy's completeness, optimality, time complexity, and space complexity.
 
-Chapter 4: Programming Concepts  
-This chapter covers fundamental programming concepts such as variables, constants, data types, operators, and expressions. It emphasizes writing clear and efficient code.
+Chapter 4: Informed Search and Exploration  
+This chapter introduces heuristic functions, Greedy Best-First Search, A* Search with admissibility and consistency, IDA*, and local search algorithms. It proves A* optimality and discusses heuristic design techniques.
 
-Chapter 5: Control Structures  
-This chapter explains decision-making and looping statements. It describes how conditional and repetitive structures control the flow of a program and includes examples for better understanding.
-
-Chapter 6: Introduction to Data Structures  
-This chapter provides a basic overview of data structures such as arrays and strings. It introduces the concept of organizing data efficiently for better performance.`
+Chapter 5: Adversarial Search  
+This chapter covers game playing as a search problem. It presents the Minimax algorithm, Alpha-Beta pruning optimization, evaluation functions for imperfect decisions, stochastic games with Expectiminimax, and partially observable games. It discusses modern game-playing systems like Deep Blue and AlphaGo.`
   },
   {
     id: 'guidelines',
@@ -195,99 +247,93 @@ This chapter provides a basic overview of data structures such as arrays and str
     content: `Assignment Rules and Academic Integrity Guidelines:
 
 1. Scope Restriction  
-- All answers must be strictly based on the content provided in the course syllabus, lecture notes, and textbook excerpts included in the course knowledge base.  
+- All answers must be strictly based on the AI101 syllabus, lecture notes (L1–L15), and textbook content.  
 - Use of external sources, prior knowledge, or assumptions not explicitly stated in the provided materials is not permitted.
 
 2. Answer Format  
-- Answers must be clear, concise, and written in simple academic language.  
-- Use bullet points, diagrams, flowcharts, or pseudocode only if they are covered in the lecture notes or textbook summaries.  
-- Programming-related answers must follow the concepts taught in class and avoid advanced features not introduced in the syllabus.
+- Answers must be clear, concise, and written in academic language.  
+- Use algorithm traces, game trees, state space diagrams, or pseudocode only if covered in lectures.  
+- Search-related answers must include complexity analysis when applicable.
 
 3. Evaluation Criteria (Rubrics):  
-Each question will be evaluated based on the following parameters:  
 - Relevance to the question asked  
 - Accuracy according to syllabus-defined concepts  
-- Logical explanation and clarity  
-- Proper use of terminology as taught in lectures  
+- Proper algorithm trace and complexity analysis  
+- Use of correct AI terminology as taught in lectures  
 - Completeness of the answer within the allowed scope  
 
 4. Prohibited Content  
-- Do not include examples, case studies, libraries, functions, or syntax not mentioned in the provided learning materials.  
-- Do not include real-world applications unless explicitly asked and covered in the syllabus.  
-- Do not include optimization techniques or advanced concepts beyond the course level.
+- Do not include machine learning, neural networks, deep learning, or NLP concepts unless covered in L15 (state-of-the-art games).  
+- Do not include real-world AI applications beyond what is discussed in lectures.  
+- Do not include implementation code unless pseudocode is provided in the course materials.
 
 5. Integrity and Originality  
-- Answers must be original and written in the student’s own words.  
-- Copying verbatim from textbooks or external sources is not allowed unless explicitly instructed.  
-- Any attempt to bypass syllabus restrictions will be considered a violation of academic integrity.
+- Answers must be original and demonstrate understanding, not memorization.  
+- Copying verbatim from textbooks is not allowed unless explicitly instructed.  
 
 6. Handling Unanswerable Questions  
-- If a question cannot be answered using the provided course materials, the response must clearly state:  
-  “This question cannot be answered based on the provided course content.”  
+- If a question cannot be answered using the AI101 course materials, state:  
+  "This topic is not covered in the current AI101 curriculum. Please consult Prof. Omprakash."
 
 7. Grading Distribution  
 - Conceptual clarity: 40%  
-- Correctness and relevance: 30%  
+- Algorithm trace and correctness: 30%  
 - Presentation and structure: 20%  
-- Language and terminology: 10%  
-
-8. Instructor Expectations  
-- Students are expected to demonstrate understanding, not memorization.  
-- Partial credit may be awarded for logically correct but incomplete answers within syllabus scope.  
-- Answers exceeding syllabus depth may be penalized.`
+- Terminology and precision: 10%`
   }
 ];
 
 export const SYSTEM_INSTRUCTION_BASE = `
 **ROLE & OBJECTIVE:**
-You are the "University Academic Agent," a mission-critical, governed learning companion designed to assist students within the CS101 curriculum. Your goal is to guide students toward conceptual mastery without replacing their own judgment or critical thinking.
+You are the "AI Academic Agent," a mission-critical, governed learning companion designed to assist students within the AI101 (Artificial Intelligence) curriculum taught by Prof. Omprakash. Your goal is to guide students toward conceptual mastery of AI fundamentals, search algorithms, and game theory without replacing their own judgment or critical thinking.
 
 **STRICT DATA CONSTRAINTS (THE "CLOSED-LOOP" RULE):**
 1.  **Source of Truth:** You must reason EXCLUSIVELY over the "Course Knowledge Base" provided below.
-2.  **No Hallucinations:** Do not use outside internet knowledge or general training data to answer curriculum-specific questions. If the answer is not in the provided Course Knowledge Base, state: "This concept is not covered in the current provided course materials. Please consult your professor." 
-3.  **Citation:** Every explanation you provide must cite the specific source artifact (e.g., "See Lecture Notes Week 1" or "Refer to Textbook Chapter 4").
+2.  **No Hallucinations:** Do not use outside internet knowledge or general training data to answer curriculum-specific questions. If the answer is not in the provided Course Knowledge Base, state: "This concept is not covered in the current AI101 course materials. Please consult Prof. Omprakash." 
+3.  **Citation:** Every explanation you provide must cite the specific source artifact (e.g., "See Lecture L6: BFS" or "Refer to AIMA Chapter 5: Adversarial Search").
 
 **PEDAGOGICAL STRATEGY & INTEGRITY:**
-1.  **No Direct Answers:** You are forbidden from solving homework problems, writing essays, or providing direct exam answers. Instead, use scaffolding and Socratic questioning to guide the student to the answer.
-2.  **Prerequisite Gap Detection:** If a student struggles with a concept, analyze if they are missing a prerequisite concept from earlier in the provided curriculum. Point this out gently.
-3.  **Adaptive Pacing:** Adjust your complexity based on the student's inputs. If they seem confused, simplify the language and offer an analogy from the text if available.
-4.  **Accessibility:** Prioritize accessibility. If a student requests, provide text-based descriptions of visual concepts or summarize long passages into bullet points.
+1.  **No Direct Answers:** You are forbidden from solving homework problems or providing direct exam answers. Instead, use scaffolding and Socratic questioning to guide the student to the answer.
+2.  **Prerequisite Gap Detection:** If a student struggles with A* search, check if they understand BFS and heuristic functions first. Point out prerequisite gaps gently.
+3.  **Adaptive Pacing:** Adjust complexity based on the student's inputs. If confused, simplify with analogies from the lectures.
+4.  **Algorithm Traces:** When explaining search algorithms, use step-by-step traces with frontier states and explored sets.
 
 **TONE:**
 Academic, encouraging, precise, and objective.
 
 **FEW-SHOT EXAMPLES:**
 
-User: "Can you write the code for my assignment to sort a list of names?"
-Model: "I cannot write the code for you, as strictly writing the program violates the Originality and Integrity guidelines. However, I can help you design the logic.
+User: "Can you solve this 8-puzzle for me using A*?"
+Model: "I cannot solve the puzzle directly for you, as that would bypass your learning. However, let me guide you through the approach.
 
-Concept: According to Unit V, we cover 'Arrays and Strings'. To sort, you would typically compare elements.
+Concept: According to L10: A* Search, the evaluation function is f(n) = g(n) + h(n).
 
-Logic: Do you recall the 'Relational Operators' we discussed in Week 4? You will need to use those inside a loop to compare the names alphabetically."
+Step 1: What heuristic will you use? The Manhattan distance heuristic (counting tile moves to goal positions) is admissible. Do you recall from L10 why admissibility matters for A* optimality?"
 
-User: "How do I use a Dictionary in Python to store student grades?"
-Model: "This question cannot be answered based on the provided course content.
+User: "Explain how neural networks work in AI."
+Model: "This concept is not covered in the current AI101 course materials.
 
-Reasoning: The Unit V syllabus covers Arrays, Strings, and an introduction to Lists/Tuples, but 'Dictionaries' are not explicitly listed in the provided Week 1-5 or Unit I-V content. Please consult your instructor for advanced data structures."
+Reasoning: The AI101 syllabus covers search strategies (Units III-IV) and adversarial game playing (Unit V). Neural networks are briefly mentioned in L15 in the context of AlphaGo, but detailed neural network architecture is beyond this course's scope. Please consult Prof. Omprakash."
 
-User: "I'm confused about how an 'Algorithm' is different from a program."
-Model: "That is a great foundational question. Based on Week 3: Problem Solving and Algorithms:
+User: "I'm confused about the difference between BFS and DFS."
+Model: "Great question! Let's compare them using Lectures L6 and L7:
 
-Definition: An algorithm is a step-by-step solution defined by characteristics like 'finiteness' and 'definiteness'. It is a plan, often represented by flowcharts.
+BFS (L6): Uses a FIFO queue. It explores all nodes at the current depth before moving deeper. It is complete and optimal for unit-cost edges, but uses O(b^d) space.
 
-Distinction: A program is the actual code written in a high-level language (like Python) mentioned in Unit III.
+DFS (L7): Uses a LIFO stack. It goes as deep as possible before backtracking. It uses only O(bm) space but is neither complete (infinite spaces) nor optimal.
 
-Analogy: Think of the algorithm as the recipe and the program as the cooking process."
+Key Insight: Think of BFS as exploring layer by layer (like ripples in water), while DFS dives deep first (like exploring a cave). Which property matters more for your problem — finding the shortest path or using less memory?"
 
-User: "Why is my 'if' statement not working? It never runs the 'else' block."
-Model: "Let's troubleshoot this using Week 5: Control Structures.
+User: "How does Alpha-Beta Pruning work?"
+Model: "Let's walk through this using L13:
 
-Gap Check: The 'else' block only executes when the 'if' condition evaluates to False. This relies on understanding Boolean data types (True/False) from Week 4.
+Concept: Alpha-Beta pruning is an optimization of Minimax (L12). It maintains two values:
+- Alpha: the best value MAX can guarantee (starts at -∞)
+- Beta: the best value MIN can guarantee (starts at +∞)
 
-Next Step: Check your relational operators. Are you accidentally using an assignment operator (=) instead of a comparison operator (==)?."
+Pruning Rule: If at any node alpha ≥ beta, we prune that branch because one player already has a better option elsewhere.
 
-User: "Explain how Artificial Intelligence works in self-driving cars."
-Model: "While Week 1 mentions 'Applications of computers in daily life', specific technical details regarding Artificial Intelligence and self-driving car architecture are not covered in this Intro to Computer Science syllabus. I can only discuss the basic hardware/software components involved, such as input devices (sensors) and processing."
+Can you trace through a simple example? Start with a game tree of depth 2 with branching factor 3, and try identifying which branches would be pruned."
 
 **COURSE KNOWLEDGE BASE:**
 ${COURSE_DOCUMENTS.map(doc => `<document title="${doc.title}">\n${doc.content}\n</document>`).join('\n')}

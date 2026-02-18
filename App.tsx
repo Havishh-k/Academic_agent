@@ -4,11 +4,14 @@ import SubjectCard, { Subject } from './components/SubjectCard';
 import SubjectView from './components/SubjectView';
 import AdminDashboard from './components/AdminDashboard';
 import TeacherDashboard from './components/TeacherDashboard';
+import AccessibleVoiceMode from './components/AccessibleVoiceMode';
 import LoginForm from './components/auth/LoginForm';
 import SignupForm from './components/auth/SignupForm';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { supabase } from './services/supabaseClient';
 import AppSidebar from './components/AppSidebar';
+import { Menu, Bell, Search, X } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
 
 // ─── Inner App with Auth ───
 const AppContent: React.FC = () => {
@@ -17,6 +20,8 @@ const AppContent: React.FC = () => {
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
   const [loadingSubjects, setLoadingSubjects] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   // Determine user role
   let userRole = UserRole.STUDENT;
@@ -24,7 +29,6 @@ const AppContent: React.FC = () => {
   else if (user?.profile.role === 'admin') userRole = UserRole.ADMIN;
 
   const studentId = user?.student?.student_id || user?.profile.id || 'anonymous';
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Fetch enrolled subjects when user logs in
   useEffect(() => {
@@ -37,7 +41,6 @@ const AppContent: React.FC = () => {
       setLoadingSubjects(true);
       try {
         if (userRole === UserRole.STUDENT && user.student) {
-          // Get student's enrolled subjects
           const { data, error } = await supabase
             .from('student_enrollments')
             .select('subject_id, subjects(*)')
@@ -49,22 +52,15 @@ const AppContent: React.FC = () => {
               .filter(Boolean) as Subject[];
             setSubjects(subs);
           }
-        } else if (userRole === UserRole.FACULTY && user.faculty) {
-          // Get faculty's assigned subjects
+        } else if (userRole === UserRole.FACULTY) {
           const { data, error } = await supabase
-            .from('faculty_subjects')
-            .select('subject_id, subjects(*)')
-            .eq('faculty_id', user.faculty.id);
-
-          if (!error && data) {
-            const subs = data
-              .map((d: any) => d.subjects)
-              .filter(Boolean) as Subject[];
-            setSubjects(subs);
-          }
+            .from('subjects')
+            .select('*')
+            .eq('faculty_id', user.profile.id);
+          if (!error && data) setSubjects(data);
         }
-      } catch (err) {
-        console.error('Error fetching subjects:', err);
+      } catch (e) {
+        console.error('Failed to load subjects:', e);
       } finally {
         setLoadingSubjects(false);
       }
@@ -74,6 +70,7 @@ const AppContent: React.FC = () => {
   }, [user, userRole]);
 
   const handleSignOut = async () => {
+    setShowLogoutModal(false);
     await signOut();
     setSelectedSubject(null);
     setSubjects([]);
@@ -82,12 +79,12 @@ const AppContent: React.FC = () => {
   // ─── Loading State ───
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+      <div className="min-h-screen flex items-center justify-center bg-[#F8F9FA]">
         <div className="text-center">
-          <div className="w-16 h-16 rounded-2xl bg-violet-600 flex items-center justify-center mx-auto mb-4 shadow-lg animate-pulse">
-            <span className="text-2xl font-serif font-bold text-white">AI</span>
+          <div className="w-14 h-14 rounded-xl bg-[#2B5797] flex items-center justify-center mx-auto mb-4 shadow-md animate-pulse">
+            <span className="text-xl font-bold text-white">VSIT</span>
           </div>
-          <p className="text-slate-500 text-sm font-medium">Loading...</p>
+          <p className="text-gray-400 text-sm font-medium">Loading Portal...</p>
         </div>
       </div>
     );
@@ -101,141 +98,229 @@ const AppContent: React.FC = () => {
     return <LoginForm onSwitchToSignup={() => setAuthView('signup')} onLogin={signIn} />;
   }
 
-  // ─── Main App Layout ───
-  // Determine active view for sidebar highlight
+  // ─── Accessible Voice-First Mode ───
+  if (userRole === UserRole.STUDENT && user.profile.prefers_voice) {
+    return (
+      <AccessibleVoiceMode
+        subjects={subjects}
+        studentId={studentId}
+        userName={user.profile.full_name}
+        onSignOut={handleSignOut}
+      />
+    );
+  }
+
+  // ─── Sidebar active view ───
   let activeView: 'home' | 'admin' | 'subject' = 'home';
   if (userRole === UserRole.ADMIN) activeView = 'admin';
   if (selectedSubject) activeView = 'subject';
 
   return (
-    <div className="flex h-screen overflow-hidden bg-slate-50 font-sans text-slate-900">
+    <div className="flex h-screen overflow-hidden bg-[#F8F9FA]">
 
-      {/* ─── Mobile Header (not for admin) ─── */}
-      {userRole !== UserRole.ADMIN && (
-        <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-white border-b border-slate-200 z-40 flex items-center justify-between px-4 shadow-sm">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setIsMobileMenuOpen(true)}
-              className="p-2 -ml-2 text-slate-500 hover:bg-slate-100 rounded-lg">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
-            </button>
-            <div className="w-8 h-8 rounded-lg bg-violet-600 flex items-center justify-center text-white font-bold text-sm shadow-sm">
-              AI
-            </div>
-            <span className="font-bold text-slate-900">Academic Agent</span>
-          </div>
-          <div className="w-8 h-8 rounded-full bg-slate-200 overflow-hidden">
-            <div className="w-full h-full bg-gradient-to-br from-slate-700 to-slate-600 flex items-center justify-center text-xs font-bold text-white">
-              {user.profile.full_name.charAt(0)}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ─── Overlay for Mobile Sidebar (not for admin) ─── */}
-      {userRole !== UserRole.ADMIN && isMobileMenuOpen && (
-        <div
-          className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 md:hidden animate-fade-in"
-          onClick={() => setIsMobileMenuOpen(false)}
-        />
-      )}
-
-      {/* ─── Global Sidebar (hidden for admin) ─── */}
-      {userRole !== UserRole.ADMIN && (
-        <div className={`fixed inset-y-0 left-0 z-50 md:static md:z-auto transition-transform duration-300 md:transform-none ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-          <AppSidebar
-            userRole={userRole}
-            subjects={subjects}
-            activeView={activeView}
-            onNavigate={(view, data) => {
-              if (view === 'subject' && data) setSelectedSubject(data);
-              else setSelectedSubject(null);
-              setIsMobileMenuOpen(false);
-            }}
-            onSignOut={handleSignOut}
-            userProfile={{ full_name: user.profile.full_name, email: user.profile.email }}
+      {/* ─── Mobile Overlay ─── */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40 lg:hidden"
+            onClick={() => setIsMobileMenuOpen(false)}
           />
-        </div>
-      )}
+        )}
+      </AnimatePresence>
+
+      {/* ─── Sidebar ─── */}
+      <div className={`fixed inset-y-0 left-0 z-50 lg:static lg:z-auto transition-transform duration-300 lg:transform-none ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}>
+        <AppSidebar
+          userRole={userRole}
+          subjects={subjects}
+          activeView={activeView}
+          onNavigate={(view, data) => {
+            if (view === 'subject' && data) setSelectedSubject(data);
+            else setSelectedSubject(null);
+            setIsMobileMenuOpen(false);
+          }}
+          onSignOut={() => setShowLogoutModal(true)}
+          userProfile={{ full_name: user.profile.full_name, email: user.profile.email }}
+        />
+      </div>
 
       {/* ─── Main Content Area ─── */}
-      <main className={`flex-1 overflow-y-auto relative z-0 flex flex-col ${userRole !== UserRole.ADMIN ? 'pt-16 md:pt-0' : ''}`}>
-        {userRole === UserRole.ADMIN ? (
-          <AdminDashboard onLogout={handleSignOut} /> // Admin is always "home" for admin role usually, but here we render it directly
-        ) : selectedSubject ? (
-          <SubjectView
-            subject={selectedSubject}
-            userRole={userRole}
-            studentId={studentId}
-            userName={user.profile.full_name}
-            onBack={() => setSelectedSubject(null)}
-          />
-        ) : userRole === UserRole.FACULTY ? (
-          <TeacherDashboard
-            subjects={subjects}
-            userName={user.profile.full_name}
-            onLogout={handleSignOut}
-            onSelectSubject={(s: Subject) => setSelectedSubject(s)}
-          />
-        ) : (
-          // Student Home (Subject Grid)
-          <div className="max-w-6xl mx-auto w-full px-4 md:px-8 py-8 md:py-12">
-            <div className="mb-8 md:mb-10">
-              <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-2">
-                {getGreeting()}, {user.profile.full_name.split(' ')[0]}! 👋
-              </h2>
-              <p className="text-slate-500 text-sm md:text-base">
-                Select a subject to start chatting with your AI tutor.
-              </p>
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+
+        {/* ─── TopBar ─── */}
+        <header className="h-[64px] bg-white border-b border-gray-200 flex items-center justify-between px-4 lg:px-8 shrink-0 shadow-sm z-10">
+          <div className="flex items-center gap-4">
+            {/* Mobile hamburger */}
+            <button
+              onClick={() => setIsMobileMenuOpen(true)}
+              className="lg:hidden p-2 text-gray-500 hover:bg-gray-100 rounded-lg"
+            >
+              <Menu size={20} />
+            </button>
+
+            {/* Mobile logo */}
+            <div className="lg:hidden flex items-center gap-2">
+              <div className="w-8 h-8 bg-[#2B5797] rounded-lg flex items-center justify-center text-white font-bold text-[10px]">
+                VSIT
+              </div>
             </div>
 
-            {loadingSubjects ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {[1, 2, 3, 4].map(i => (
-                  <div key={i} className="bg-white rounded-xl border border-slate-200 h-48 animate-pulse shadow-sm"></div>
-                ))}
-              </div>
-            ) : subjects.length === 0 ? (
-              <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-slate-300">
-                <div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-4">
-                  <span className="text-3xl">📚</span>
-                </div>
-                <h3 className="text-lg font-bold text-slate-800 mb-2">No Subjects Found</h3>
-                <p className="text-slate-500 text-sm">You aren't enrolled in any subjects yet.</p>
-              </div>
-            ) : (
-              <div className="space-y-8 md:space-y-10">
-                {Object.entries(
-                  subjects.reduce<Record<number, Subject[]>>((acc, s) => {
-                    const sem = s.semester || 0;
-                    (acc[sem] = acc[sem] || []).push(s);
-                    return acc;
-                  }, {})
-                ).sort(([a], [b]) => Number(b) - Number(a)).map(([sem, subs]) => (
-                  <div key={sem}>
-                    <div className="flex items-center gap-4 mb-4 md:mb-6">
-                      <div className="w-8 h-8 rounded-lg bg-violet-100 text-violet-700 flex items-center justify-center text-xs font-bold ring-1 ring-violet-200">
-                        S{sem}
-                      </div>
-                      <h3 className="text-lg font-bold text-slate-800">Semester {sem}</h3>
-                      <div className="flex-1 h-px bg-slate-200"></div>
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
-                      {subs.map(subject => (
-                        <SubjectCard
-                          key={subject.id}
-                          subject={subject}
-                          onClick={() => setSelectedSubject(subject)}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+            {/* Search */}
+            <div className="hidden md:flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 w-80">
+              <Search size={16} className="text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search subjects, topics..."
+                className="bg-transparent text-sm text-[#212529] placeholder:text-gray-400 outline-none w-full"
+              />
+            </div>
           </div>
+
+          <div className="flex items-center gap-3">
+            {/* Notifications */}
+            <button className="relative p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors">
+              <Bell size={20} />
+              <span className="absolute top-1 right-1 w-2 h-2 bg-[#D13438] rounded-full" />
+            </button>
+
+            {/* User */}
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-[#E8F0FE] text-[#2B5797] font-bold text-xs flex items-center justify-center">
+                {user.profile.full_name.charAt(0)}
+              </div>
+              <span className="hidden sm:block text-sm font-medium text-[#212529]">{user.profile.full_name.split(' ')[0]}</span>
+            </div>
+          </div>
+        </header>
+
+        {/* ─── Page Content ─── */}
+        <main className="flex-1 overflow-y-auto">
+          {userRole === UserRole.ADMIN ? (
+            <AdminDashboard onLogout={() => setShowLogoutModal(true)} />
+          ) : selectedSubject ? (
+            <SubjectView
+              subject={selectedSubject}
+              userRole={userRole}
+              studentId={studentId}
+              userName={user.profile.full_name}
+              onBack={() => setSelectedSubject(null)}
+            />
+          ) : userRole === UserRole.FACULTY ? (
+            <TeacherDashboard
+              subjects={subjects}
+              userName={user.profile.full_name}
+              onLogout={() => setShowLogoutModal(true)}
+              onSelectSubject={(s: Subject) => setSelectedSubject(s)}
+            />
+          ) : (
+            /* Student Home – Subject Grid */
+            <div className="max-w-[1200px] mx-auto w-full px-4 lg:px-8 py-8">
+              <div className="mb-8">
+                <h2 className="text-2xl font-bold text-[#212529] mb-1">
+                  {getGreeting()}, {user.profile.full_name.split(' ')[0]}! 👋
+                </h2>
+                <p className="text-[#6C757D] text-sm">
+                  Select a subject to start chatting with your AI tutor.
+                </p>
+              </div>
+
+              {loadingSubjects ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  {[1, 2, 3, 4].map(i => (
+                    <div key={i} className="bg-white rounded-xl border border-gray-200 h-48 animate-pulse shadow-sm" />
+                  ))}
+                </div>
+              ) : subjects.length === 0 ? (
+                <div className="text-center py-20 bg-white rounded-xl border border-dashed border-gray-300">
+                  <div className="w-16 h-16 rounded-xl bg-gray-100 flex items-center justify-center mx-auto mb-4">
+                    <span className="text-3xl">📚</span>
+                  </div>
+                  <h3 className="text-lg font-bold text-[#212529] mb-2">No Subjects Found</h3>
+                  <p className="text-[#6C757D] text-sm">You aren't enrolled in any subjects yet.</p>
+                </div>
+              ) : (
+                <div className="space-y-8">
+                  {Object.entries(
+                    subjects.reduce<Record<number, Subject[]>>((acc, s) => {
+                      const sem = s.semester || 0;
+                      (acc[sem] = acc[sem] || []).push(s);
+                      return acc;
+                    }, {})
+                  ).sort(([a], [b]) => Number(b) - Number(a)).map(([sem, subs]) => (
+                    <div key={sem}>
+                      <div className="flex items-center gap-4 mb-4">
+                        <div className="w-8 h-8 rounded-lg bg-[#E8F0FE] text-[#2B5797] flex items-center justify-center text-xs font-bold">
+                          S{sem}
+                        </div>
+                        <h3 className="text-lg font-bold text-[#212529]">Semester {sem}</h3>
+                        <div className="flex-1 h-px bg-gray-200" />
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                        {subs.map(subject => (
+                          <SubjectCard
+                            key={subject.id}
+                            subject={subject}
+                            onClick={() => setSelectedSubject(subject)}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </main>
+      </div>
+
+      {/* ─── Logout Confirmation Modal ─── */}
+      <AnimatePresence>
+        {showLogoutModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4"
+            onClick={() => setShowLogoutModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-sm"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold text-[#212529]">Sign Out</h3>
+                <button onClick={() => setShowLogoutModal(false)} className="p-1 text-gray-400 hover:text-gray-600 rounded">
+                  <X size={18} />
+                </button>
+              </div>
+              <p className="text-[#6C757D] text-sm mb-6">
+                Are you sure you want to sign out of VSIT AI Academic Agent?
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowLogoutModal(false)}
+                  className="flex-1 py-2.5 rounded-lg border border-gray-300 text-[#212529] text-sm font-medium hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSignOut}
+                  className="flex-1 py-2.5 rounded-lg bg-[#D13438] text-white text-sm font-semibold hover:bg-[#b82c2f] transition-colors"
+                >
+                  Sign Out
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
         )}
-      </main>
+      </AnimatePresence>
     </div>
   );
 };

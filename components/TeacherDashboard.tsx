@@ -458,7 +458,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ subjects, userName,
     ];
 
     return (
-        <div style={{ minHeight: '100vh', background: 'linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%)' }}>
+        <div style={{ minHeight: '100vh', background: '#F8F9FA' }}>
             {/* Header */}
             <header style={{
                 background: 'rgba(255,255,255,0.8)', backdropFilter: 'blur(12px)',
@@ -468,10 +468,10 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ subjects, userName,
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                         <div style={{
                             width: 40, height: 40, borderRadius: 12,
-                            background: 'linear-gradient(135deg, #8B5CF6, #7C3AED)',
+                            background: '#2B5797',
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            color: '#fff', fontWeight: 700, fontSize: 14, boxShadow: '0 4px 12px rgba(124,58,237,0.3)'
-                        }}>AI</div>
+                            color: '#fff', fontWeight: 700, fontSize: 14, boxShadow: '0 4px 12px rgba(43,87,151,0.3)'
+                        }}>VSIT</div>
                         <div>
                             <h1 style={{ fontWeight: 700, color: '#111827', fontSize: 16, margin: 0 }}>Teacher Portal</h1>
                             <p style={{
@@ -512,8 +512,8 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ subjects, userName,
                             style={{
                                 padding: '10px 16px', border: 'none', background: 'none', cursor: 'pointer',
                                 fontSize: 13, fontWeight: activeTab === t.id ? 600 : 400,
-                                color: activeTab === t.id ? '#7C3AED' : '#6B7280',
-                                borderBottom: activeTab === t.id ? '2px solid #7C3AED' : '2px solid transparent',
+                                color: activeTab === t.id ? '#2B5797' : '#6B7280',
+                                borderBottom: activeTab === t.id ? '2px solid #2B5797' : '2px solid transparent',
                                 marginBottom: -1, transition: 'all 0.15s'
                             }}
                         >{t.icon} {t.label}</button>

@@ -235,17 +235,17 @@ const SubjectView: React.FC<SubjectViewProps> = ({ subject, userRole, studentId,
                 case 'proctor': return 'border-amber-400 ring-2 ring-amber-100 shadow-amber-100 shadow-lg animate-pulse';
                 case 'curator': return 'border-blue-400 ring-2 ring-blue-100 shadow-blue-100 shadow-lg animate-pulse';
                 case 'tutor': return 'border-emerald-400 ring-2 ring-emerald-100 shadow-emerald-100 shadow-lg animate-pulse';
-                default: return 'border-violet-500 animate-pulse';
+                default: return 'border-[#2B5797] animate-pulse';
             }
         }
-        return 'border-violet-200 animate-pulse'; // Default loading
+        return 'border-[#9DBFE3] animate-pulse'; // Default loading
     };
 
     return (
-        <div className="flex h-full w-full bg-slate-50 overflow-hidden font-sans">
+        <div className="flex h-full w-full bg-[#F8F9FA] overflow-hidden font-sans">
             {/* ─── LEFT PANE: Artifacts / Context ─── */}
-            <div className="w-80 bg-white border-r border-slate-200 flex flex-col shrink-0 z-20 hidden md:flex">
-                <div className="h-14 border-b border-slate-100 flex items-center px-4 font-bold text-slate-700 text-sm tracking-wide uppercase">
+            <div className="w-80 bg-white border-r border-gray-200 flex flex-col shrink-0 z-20 hidden md:flex">
+                <div className="h-14 border-b border-gray-100 flex items-center px-4 font-bold text-[#212529] text-sm tracking-wide uppercase">
                     Course Artifacts
                 </div>
 
@@ -267,7 +267,7 @@ const SubjectView: React.FC<SubjectViewProps> = ({ subject, userRole, studentId,
                             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Assessments</h3>
                             <button
                                 onClick={() => setActiveTab('quiz')}
-                                className="w-full py-3 rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 text-white font-bold text-sm shadow-lg shadow-indigo-200 hover:shadow-xl hover:scale-[1.02] transition-all flex items-center justify-center gap-2"
+                                className="w-full py-3 rounded-xl bg-[#2B5797] text-white font-bold text-sm shadow-lg shadow-blue-200 hover:shadow-xl hover:bg-[#1a3a6e] hover:scale-[1.02] transition-all flex items-center justify-center gap-2"
                             >
                                 <span>⚡</span> Enter Quiz Zone
                             </button>
@@ -277,9 +277,9 @@ const SubjectView: React.FC<SubjectViewProps> = ({ subject, userRole, studentId,
             </div>
 
             {/* ─── RIGHT PANE: Chat Workspace ─── */}
-            <div className="flex-1 flex flex-col relative bg-slate-50/50 min-w-0">
+            <div className="flex-1 flex flex-col relative bg-[#F8F9FA] min-w-0">
                 {/* Header */}
-                <header className="h-14 bg-white/80 backdrop-blur-md border-b border-slate-200 flex items-center justify-between px-6 sticky top-0 z-10">
+                <header className="h-14 bg-white/80 backdrop-blur-md border-b border-gray-200 flex items-center justify-between px-6 sticky top-0 z-10">
                     <div className="flex items-center gap-3">
                         <button
                             onClick={handleBack}
@@ -292,14 +292,14 @@ const SubjectView: React.FC<SubjectViewProps> = ({ subject, userRole, studentId,
                             {theme.icon}
                         </div>
                         <div>
-                            <h1 className="font-bold text-slate-800 text-base leading-none">{subject.subject_name}</h1>
+                            <h1 className="font-bold text-[#212529] text-base leading-none">{subject.subject_name}</h1>
                         </div>
                     </div>
                     <div className="flex items-center gap-2">
                         {userRole === UserRole.STUDENT && (
                             <TTSToggle enabled={ttsEnabled} onToggle={() => setTtsEnabled(!ttsEnabled)} />
                         )}
-                        <span className="px-2 py-1 rounded text-[10px] font-bold bg-slate-100 text-slate-500 border border-slate-200">
+                        <span className="px-2 py-1 rounded text-[10px] font-bold bg-gray-100 text-[#6C757D] border border-gray-200">
                             {subject.subject_code}
                         </span>
                     </div>
@@ -315,7 +315,7 @@ const SubjectView: React.FC<SubjectViewProps> = ({ subject, userRole, studentId,
                                     <div className="ml-12 mt-1 flex items-center gap-1">
                                         <button
                                             onClick={() => speakText(msg.content.replace(/[*#_`~]/g, ''))}
-                                            className="flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-medium text-slate-400 hover:text-violet-600 hover:bg-violet-50 transition-colors"
+                                            className="flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-medium text-slate-400 hover:text-[#2B5797] hover:bg-[#E8F0FE] transition-colors"
                                             title="Read aloud">
                                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" /><path d="M15.54 8.46a5 5 0 0 1 0 7.07" /></svg>
                                             Listen
@@ -349,7 +349,7 @@ const SubjectView: React.FC<SubjectViewProps> = ({ subject, userRole, studentId,
 
                 {/* ─── FAB Input Area ─── */}
                 <div className="absolute bottom-6 left-0 right-0 px-4 z-20 flex justify-center pointer-events-none">
-                    <div className="w-full max-w-2xl bg-white rounded-3xl shadow-2xl shadow-slate-200 pointer-events-auto transition-all duration-300 relative group">
+                    <div className="w-full max-w-2xl bg-white rounded-3xl shadow-2xl shadow-gray-200 pointer-events-auto transition-all duration-300 relative group">
 
                         {/* Status Border Gradient Wrapper */}
                         <div className={`absolute -inset-1 rounded-[26px] bg-gradient-to-r opacity-50 blur-sm transition-all duration-500 ${isLoading
@@ -366,7 +366,7 @@ const SubjectView: React.FC<SubjectViewProps> = ({ subject, userRole, studentId,
                                 <div className="absolute bottom-full mb-4 left-0 w-full flex flex-wrap gap-2 justify-center px-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none group-hover:pointer-events-auto">
                                     {QUICK_SUGGESTIONS.slice(0, 3).map((s, i) => (
                                         <button key={i} onClick={() => handleSend(s.text)}
-                                            className="bg-white/90 backdrop-blur border border-slate-200 hover:border-violet-300 shadow-sm rounded-full px-4 py-1.5 text-xs font-medium text-slate-600 hover:text-violet-700 hover:scale-105 transition-all">
+                                            className="bg-white/90 backdrop-blur border border-slate-200 hover:border-[#6B9AD1] shadow-sm rounded-full px-4 py-1.5 text-xs font-medium text-slate-600 hover:text-[#1a3a6e] hover:scale-105 transition-all">
                                             {s.label}
                                         </button>
                                     ))}
@@ -399,8 +399,8 @@ const SubjectView: React.FC<SubjectViewProps> = ({ subject, userRole, studentId,
                                     onClick={() => handleSend()}
                                     disabled={!input.trim() || isLoading}
                                     className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all ${input.trim() && !isLoading
-                                        ? 'bg-violet-600 text-white shadow-lg shadow-violet-200 hover:scale-105 active:scale-95'
-                                        : 'bg-slate-100 text-slate-300'
+                                        ? 'bg-[#2B5797] text-white shadow-lg shadow-blue-200 hover:scale-105 active:scale-95'
+                                        : 'bg-gray-100 text-gray-300'
                                         }`}
                                 >
                                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -415,7 +415,7 @@ const SubjectView: React.FC<SubjectViewProps> = ({ subject, userRole, studentId,
 
                 {/* Quiz Modal Overlay */}
                 {activeTab === 'quiz' && (
-                    <div className="absolute inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
+                    <div className="absolute inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
                         <div className="bg-white w-full max-w-4xl h-[80vh] rounded-2xl shadow-2xl flex flex-col relative overflow-hidden">
                             <button onClick={() => setActiveTab('chat')} className="absolute top-4 right-4 p-2 rounded-full bg-slate-100 hover:bg-slate-200 transition-colors z-10">
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
@@ -423,16 +423,16 @@ const SubjectView: React.FC<SubjectViewProps> = ({ subject, userRole, studentId,
                             <div className="flex-1 flex flex-col items-center justify-center p-8 text-center overflow-y-auto">
                                 {!activeQuiz && !quizResult && (
                                     <>
-                                        <div className="w-20 h-20 bg-violet-100 text-violet-600 rounded-2xl flex items-center justify-center text-4xl mb-4 shadow-inner">⚡</div>
+                                        <div className="w-20 h-20 bg-[#E8F0FE] text-[#2B5797] rounded-2xl flex items-center justify-center text-4xl mb-4 shadow-inner">⚡</div>
                                         <h2 className="text-2xl font-bold text-slate-900 mb-2">Quiz Zone</h2>
                                         <p className="text-slate-500 max-w-md mb-8">
                                             Test your knowledge with adaptive quizzes generated from your course materials.
                                         </p>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-2xl">
                                             {availableQuizzes.map(q => (
-                                                <button key={q.id} onClick={() => startQuiz(q)} className="p-4 rounded-xl border border-slate-200 hover:border-violet-500 hover:bg-violet-50 transition-all text-left group bg-white shadow-sm">
-                                                    <h3 className="font-bold text-slate-800 group-hover:text-violet-700">{q.title}</h3>
-                                                    <p className="text-xs text-slate-400">{q.difficulty} • {q.num_questions} Questions</p>
+                                                <button key={q.id} onClick={() => startQuiz(q)} className="p-4 rounded-xl border border-gray-200 hover:border-[#2B5797] hover:bg-[#E8F0FE] transition-all text-left group bg-white shadow-sm">
+                                                    <h3 className="font-bold text-[#212529] group-hover:text-[#2B5797]">{q.title}</h3>
+                                                    <p className="text-xs text-[#6C757D]">{q.difficulty} • {q.num_questions} Questions</p>
                                                 </button>
                                             ))}
                                         </div>
@@ -460,7 +460,7 @@ const SubjectView: React.FC<SubjectViewProps> = ({ subject, userRole, studentId,
                                                     <p className="font-bold text-slate-800 text-lg">{idx + 1}. {q.question}</p>
                                                     <div className="space-y-2 pl-4 border-l-2 border-slate-200">
                                                         {q.options.map((opt: string) => (
-                                                            <label key={opt} className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${quizAnswers[idx] === opt ? 'bg-violet-50 border-violet-500 ring-1 ring-violet-500' : 'bg-white border-slate-200 hover:bg-slate-50'
+                                                            <label key={opt} className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${quizAnswers[idx] === opt ? 'bg-[#E8F0FE] border-[#2B5797] ring-1 ring-[#2B5797]' : 'bg-white border-gray-200 hover:bg-gray-50'
                                                                 }`}>
                                                                 <input
                                                                     type="radio"
@@ -470,7 +470,7 @@ const SubjectView: React.FC<SubjectViewProps> = ({ subject, userRole, studentId,
                                                                     onChange={() => setQuizAnswers(prev => ({ ...prev, [idx]: opt }))}
                                                                     className="hidden"
                                                                 />
-                                                                <span className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${quizAnswers[idx] === opt ? 'border-violet-600 bg-violet-600' : 'border-slate-300'}`}>
+                                                                <span className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${quizAnswers[idx] === opt ? 'border-[#2B5797] bg-[#2B5797]' : 'border-gray-300'}`}>
                                                                     {quizAnswers[idx] === opt && <span className="w-2 h-2 rounded-full bg-white"></span>}
                                                                 </span>
                                                                 <span className="text-sm text-slate-700">{opt}</span>
@@ -484,7 +484,7 @@ const SubjectView: React.FC<SubjectViewProps> = ({ subject, userRole, studentId,
                                             <button
                                                 onClick={submitQuiz}
                                                 disabled={quizSubmitting || Object.keys(quizAnswers).length < activeQuiz.questions.length}
-                                                className="w-full py-4 bg-violet-600 text-white rounded-xl font-bold shadow-lg hover:bg-violet-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                                                className="w-full py-4 bg-[#2B5797] text-white rounded-xl font-bold shadow-lg hover:bg-[#1a3a6e] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                                             >
                                                 {quizSubmitting ? 'Submitting...' : 'Submit Quiz'}
                                             </button>

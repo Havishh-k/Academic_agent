@@ -1,4 +1,5 @@
 import React from 'react';
+import { BookOpen, ArrowRight } from 'lucide-react';
 
 interface Subject {
     id: string;
@@ -34,53 +35,48 @@ const SubjectCard: React.FC<SubjectCardProps> = ({ subject, onClick }) => {
     return (
         <button
             onClick={onClick}
-            className="subject-card group"
-            style={{ '--accent': theme.accent } as React.CSSProperties}
+            className="w-full text-left bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg hover:border-[#2B5797]/30 transition-all duration-300 group"
         >
             {/* Accent top bar */}
             <div
-                className="subject-card-accent"
+                className="h-1.5 w-full"
                 style={{ background: theme.gradient }}
             />
 
-            {/* Card body */}
-            <div className="subject-card-body">
+            <div className="p-5">
                 {/* Icon + Code */}
                 <div className="flex items-start justify-between mb-4">
                     <div
-                        className="subject-card-icon"
+                        className="w-12 h-12 rounded-xl flex items-center justify-center text-white shadow-sm"
                         style={{ background: theme.gradient }}
                     >
                         <span className="text-2xl">{theme.icon}</span>
                     </div>
-                    <span className="text-xs font-bold tracking-wider uppercase opacity-40 group-hover:opacity-60 transition-opacity">
+                    <span className="text-[10px] font-bold tracking-wider uppercase text-gray-400 group-hover:text-[#2B5797] transition-colors bg-gray-50 px-2 py-1 rounded-md">
                         {subject.subject_code}
                     </span>
                 </div>
 
                 {/* Subject Name */}
-                <h3 className="font-bold text-[15px] text-gray-900 mb-1 leading-snug group-hover:text-gray-800 transition-colors">
+                <h3 className="font-bold text-[15px] text-[#212529] mb-1 leading-snug group-hover:text-[#2B5797] transition-colors">
                     {subject.subject_name}
                 </h3>
 
                 {/* Description */}
                 {subject.description && (
-                    <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed mb-4">
+                    <p className="text-xs text-[#6C757D] line-clamp-2 leading-relaxed mb-4">
                         {subject.description}
                     </p>
                 )}
 
                 {/* Footer */}
                 <div className="flex items-center justify-between mt-auto pt-3 border-t border-gray-100">
-                    <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">
+                    <span className="text-[10px] font-semibold text-[#ADB5BD] uppercase tracking-wider flex items-center gap-1">
+                        <BookOpen size={12} />
                         Sem {subject.semester || '—'}
                     </span>
-                    <span className="text-xs font-semibold flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all translate-x-1 group-hover:translate-x-0"
-                        style={{ color: theme.accent }}>
-                        Open
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M5 12h14M12 5l7 7-7 7" />
-                        </svg>
+                    <span className="text-xs font-semibold text-[#2B5797] flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all translate-x-1 group-hover:translate-x-0">
+                        Open <ArrowRight size={14} />
                     </span>
                 </div>
             </div>

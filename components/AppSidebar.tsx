@@ -1,5 +1,19 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { UserRole } from '../types';
+import {
+    LayoutDashboard,
+    BookOpen,
+    FileText,
+    CheckSquare,
+    BarChart2,
+    Bot,
+    Settings,
+    LogOut,
+    Users,
+    Upload,
+    ClipboardList,
+    ChevronRight,
+} from 'lucide-react';
 
 interface AppSidebarProps {
     userRole: UserRole;
@@ -10,102 +24,158 @@ interface AppSidebarProps {
     userProfile: { full_name: string; email: string };
 }
 
-const AppSidebar: React.FC<AppSidebarProps> = ({ userRole, subjects, onNavigate, activeView, onSignOut, userProfile }) => {
-    const [expandedSemester, setExpandedSemester] = useState<number | null>(null);
+interface NavItem {
+    id: string;
+    label: string;
+    icon: React.ElementType;
+    view: 'home' | 'admin' | 'subject';
+}
 
-    // Group subjects by semester
-    const subjectsBySem = subjects.reduce((acc, s) => {
-        const sem = s.semester || 0;
-        if (!acc[sem]) acc[sem] = [];
-        acc[sem].push(s);
-        return acc;
-    }, {} as Record<number, any[]>);
+const AppSidebar: React.FC<AppSidebarProps> = ({
+    userRole,
+    subjects,
+    onNavigate,
+    activeView,
+    onSignOut,
+    userProfile,
+}) => {
+    // Role-aware sidebar items
+    const getNavItems = (): NavItem[] => {
+        if (userRole === UserRole.ADMIN) {
+            return [
+                { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, view: 'admin' },
+                { id: 'users', label: 'User Management', icon: Users, view: 'admin' },
+                { id: 'analytics', label: 'Analytics', icon: BarChart2, view: 'admin' },
+                { id: 'settings', label: 'Settings', icon: Settings, view: 'admin' },
+            ];
+        }
+        if (userRole === UserRole.FACULTY) {
+            return [
+                { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, view: 'home' },
+                { id: 'materials', label: 'Materials', icon: Upload, view: 'home' },
+                { id: 'quizgen', label: 'Quiz Generator', icon: ClipboardList, view: 'home' },
+                { id: 'reports', label: 'Student Reports', icon: BarChart2, view: 'home' },
+                { id: 'settings', label: 'Settings', icon: Settings, view: 'home' },
+            ];
+        }
+        // Student
+        return [
+            { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, view: 'home' },
+            { id: 'subjects', label: 'My Subjects', icon: BookOpen, view: 'home' },
+            { id: 'notes', label: 'Course Notes', icon: FileText, view: 'home' },
+            { id: 'assignments', label: 'Assignments', icon: CheckSquare, view: 'home' },
+            { id: 'performance', label: 'Performance', icon: BarChart2, view: 'home' },
+            { id: 'ai', label: 'AI Tutor', icon: Bot, view: 'home' },
+            { id: 'settings', label: 'Settings', icon: Settings, view: 'home' },
+        ];
+    };
 
-    const sortedSems = Object.keys(subjectsBySem).map(Number).sort((a, b) => b - a);
+    const navItems = getNavItems();
+    const initials = userProfile.full_name
+        .split(' ')
+        .map((n) => n[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 2);
 
     return (
-        <div className="flex h-screen bg-slate-900 text-white shrink-0 transition-all duration-300">
-            {/* 1. Icon Rail (Fixed Width) */}
-            <div className="w-[68px] flex flex-col items-center py-6 border-r border-slate-800 bg-slate-950 z-20">
-                {/* Brand */}
-                <div className="w-10 h-10 rounded-xl bg-violet-600 flex items-center justify-center text-white font-bold text-lg mb-8 shadow-lg shadow-violet-900/20">
-                    AI
-                </div>
-
-                {/* Nav Icons */}
-                <div className="flex flex-col gap-4 w-full px-3">
-                    <button onClick={() => onNavigate('home')}
-                        className={`w-full aspect-square rounded-xl flex items-center justify-center transition-all ${activeView === 'home' ? 'bg-slate-800 text-white shadow-inner' : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'}`}
-                        title="Home">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg>
-                    </button>
-
-                    {userRole === UserRole.ADMIN && (
-                        <button onClick={() => onNavigate('admin')}
-                            className={`w-full aspect-square rounded-xl flex items-center justify-center transition-all ${activeView === 'admin' ? 'bg-slate-800 text-white shadow-inner' : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'}`}
-                            title="Admin Portal">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="7" height="7" /></svg>
-                        </button>
-                    )}
-                </div>
-
-                {/* User Profile (Bottom) */}
-                <div className="mt-auto flex flex-col gap-4 w-full px-3">
-                    <div className="w-full aspect-square rounded-full bg-gradient-to-br from-slate-700 to-slate-600 flex items-center justify-center text-xs font-bold ring-2 ring-slate-900 cursor-help" title={userProfile.full_name}>
-                        {userProfile.full_name.charAt(0)}
+        <div className="w-[260px] h-screen bg-white border-r border-gray-200 flex flex-col shrink-0">
+            {/* Logo / Brand */}
+            <div className="p-5 border-b border-gray-100">
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-[#2B5797] rounded-lg flex items-center justify-center text-white font-bold text-sm shadow-md">
+                        VSIT
+                    </div>
+                    <div>
+                        <h1 className="font-bold text-[#212529] text-sm leading-tight">VSIT AI Agent</h1>
+                        <p className="text-[10px] text-gray-400 font-medium">Academic Portal</p>
                     </div>
                 </div>
             </div>
 
-            {/* 2. Collapsible Panel (Subject List) */}
-            <div className="w-64 bg-slate-900 flex flex-col border-r border-slate-800">
-                <div className="p-5 border-b border-slate-800/50">
-                    <h2 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-1">Workspace</h2>
-                    <p className="text-lg font-bold text-white tracking-tight">Academic Agent</p>
+            {/* Navigation */}
+            <nav className="flex-1 overflow-y-auto py-4 px-3">
+                <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider px-3 mb-3">
+                    Navigation
                 </div>
-
-                <div className="flex-1 overflow-y-auto py-4 px-3 custom-scrollbar">
-                    {sortedSems.map(sem => (
-                        <div key={sem} className="mb-2">
+                <div className="space-y-1">
+                    {navItems.map((item) => {
+                        const isActive =
+                            (item.id === 'dashboard' && activeView === 'home' && !subjects.some(() => false)) ||
+                            (item.view === 'admin' && activeView === 'admin' && item.id === 'dashboard');
+                        return (
                             <button
-                                onClick={() => setExpandedSemester(expandedSemester === sem ? null : sem)}
-                                className="w-full flex items-center justify-between px-3 py-2 text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg transition-colors group">
-                                <span className="flex items-center gap-2">
-                                    <span className="w-6 h-6 rounded bg-slate-800 flex items-center justify-center text-[10px] font-bold text-slate-400 group-hover:text-white transition-colors">S{sem}</span>
-                                    Semester {sem}
-                                </span>
-                                <svg className={`w-4 h-4 text-slate-500 transition-transform ${expandedSemester === sem ? 'rotate-90' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 18l6-6-6-6" /></svg>
+                                key={item.id}
+                                onClick={() => onNavigate(item.view)}
+                                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all group ${isActive
+                                        ? 'bg-[#E8F0FE] text-[#2B5797] border-l-4 border-[#2B5797] -ml-[4px] pl-[16px]'
+                                        : 'text-[#495057] hover:bg-gray-50 hover:text-[#212529]'
+                                    }`}
+                            >
+                                <item.icon
+                                    size={18}
+                                    className={isActive ? 'text-[#2B5797]' : 'text-gray-400 group-hover:text-[#2B5797]'}
+                                />
+                                {item.label}
                             </button>
-
-                            {/* Subjects List */}
-                            {expandedSemester === sem && (
-                                <div className="mt-1 ml-3 pl-3 border-l border-slate-700 space-y-0.5">
-                                    {subjectsBySem[sem].map(subj => (
-                                        <button key={subj.id}
-                                            onClick={() => onNavigate('subject', subj)}
-                                            className="w-full text-left px-3 py-2 text-sm text-slate-400 hover:text-white hover:bg-slate-800/50 rounded-md transition-all flex items-center gap-2">
-                                            <span className="w-1.5 h-1.5 rounded-full bg-violet-500/50"></span>
-                                            <span className="truncate">{subj.subject_code}</span>
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                    ))}
-
-                    {sortedSems.length === 0 && (
-                        <div className="text-slate-500 text-sm px-4 py-8 text-center italic">
-                            No subjects enrolled.
-                        </div>
-                    )}
+                        );
+                    })}
                 </div>
 
-                <div className="p-4 border-t border-slate-800">
-                    <button onClick={onSignOut} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-400 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 rounded-lg transition-colors font-semibold">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" /><polyline points="16,17 21,12 16,7" /><line x1="21" y1="12" x2="9" y2="12" /></svg>
-                        Sign Out
-                    </button>
+                {/* Subjects Quick List (Students only) */}
+                {userRole === UserRole.STUDENT && subjects.length > 0 && (
+                    <div className="mt-6">
+                        <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider px-3 mb-3">
+                            My Subjects
+                        </div>
+                        <div className="space-y-0.5">
+                            {subjects.slice(0, 6).map((sub) => (
+                                <button
+                                    key={sub.id}
+                                    onClick={() => onNavigate('subject', sub)}
+                                    className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all group ${activeView === 'subject'
+                                            ? 'text-[#495057] hover:bg-gray-50'
+                                            : 'text-[#495057] hover:bg-[#E8F0FE] hover:text-[#2B5797]'
+                                        }`}
+                                >
+                                    <div className="w-2 h-2 rounded-full bg-[#6264A7] shrink-0" />
+                                    <span className="truncate">{sub.subject_name || sub.subject_code}</span>
+                                    <ChevronRight size={14} className="ml-auto text-gray-300 group-hover:text-[#2B5797] shrink-0" />
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                )}
+            </nav>
+
+            {/* User Profile & Sign Out */}
+            <div className="p-4 border-t border-gray-100">
+                <div className="flex items-center gap-3 mb-3">
+                    <div className="w-9 h-9 rounded-full bg-[#E8F0FE] text-[#2B5797] font-bold text-xs flex items-center justify-center border-2 border-white shadow-sm">
+                        {initials}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-[#212529] truncate">{userProfile.full_name}</p>
+                        <p className="text-[10px] text-gray-400 truncate">{userProfile.email}</p>
+                    </div>
                 </div>
+                <button
+                    onClick={onSignOut}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#D13438] bg-red-50 hover:bg-red-100 border border-red-100 rounded-lg transition-colors font-medium"
+                >
+                    <LogOut size={16} />
+                    Sign Out
+                </button>
+            </div>
+
+            {/* Footer */}
+            <div className="px-4 pb-3">
+                <div className="flex gap-3 text-[10px] text-gray-400">
+                    <span className="hover:text-[#2B5797] cursor-pointer">About</span>
+                    <span className="hover:text-[#2B5797] cursor-pointer">Contact</span>
+                    <span className="hover:text-[#2B5797] cursor-pointer">Privacy</span>
+                </div>
+                <p className="text-[9px] text-gray-300 mt-1">© 2026 VSIT AI Agent</p>
             </div>
         </div>
     );

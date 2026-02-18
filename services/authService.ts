@@ -5,6 +5,7 @@ export interface UserProfile {
     email: string;
     full_name: string;
     role: 'student' | 'faculty' | 'admin';
+    prefers_voice?: boolean;
 }
 
 export interface StudentInfo {

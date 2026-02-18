@@ -19,6 +19,7 @@ interface UserRow {
     full_name: string;
     role: string;
     created_at: string;
+    prefers_voice?: boolean;
 }
 
 interface SubjectRow {
@@ -154,7 +155,7 @@ const AdminDashboard: React.FC<{ onLogout: () => void }> = ({ onLogout }) => {
                         <button key={t.key}
                             onClick={() => setActiveTab(t.key)}
                             className={`px-4 py-4 text-sm font-semibold flex items-center gap-2 border-b-2 transition-colors ${activeTab === t.key
-                                ? 'border-violet-600 text-violet-700'
+                                ? 'border-[#2B5797] text-[#2B5797]'
                                 : 'border-transparent text-gray-400 hover:text-gray-600'
                                 }`}>
                             <span>{t.icon}</span>
@@ -185,6 +186,7 @@ const AdminDashboard: React.FC<{ onLogout: () => void }> = ({ onLogout }) => {
                         filter={userFilter}
                         onFilterChange={setUserFilter}
                         totalCounts={{ students: stats.totalStudents, faculty: stats.totalFaculty }}
+                        onRefreshUsers={fetchUsers}
                     />
                 )}
                 {activeTab === 'subjects' && <SubjectsTab subjects={subjects} onRefresh={fetchSubjects} />}
@@ -212,7 +214,7 @@ const OverviewTab: React.FC<{
                             <h3 className="text-lg font-bold text-slate-900">Recent Proctor Logs</h3>
                             <p className="text-sm text-slate-500">Live system events and academic integrity checks</p>
                         </div>
-                        <button onClick={() => onNavigate('logs')} className="text-violet-600 hover:text-violet-700 text-sm font-medium">View All</button>
+                        <button onClick={() => onNavigate('logs')} className="text-[#2B5797] hover:text-[#1a3a6e] text-sm font-medium">View All</button>
                     </div>
 
                     <div className="divide-y divide-slate-100">
@@ -265,7 +267,7 @@ const OverviewTab: React.FC<{
                 {/* Metrics Grid */}
                 <div className="grid grid-cols-2 gap-4">
                     <BentoMetric title="Students" value={stats.totalStudents} icon="🎓" color="bg-blue-50 text-blue-600" onClick={() => onNavigate('users')} />
-                    <BentoMetric title="Faculty" value={stats.totalFaculty} icon="👨‍🏫" color="bg-purple-50 text-purple-600" onClick={() => onNavigate('users')} />
+                    <BentoMetric title="Faculty" value={stats.totalFaculty} icon="👨‍🏫" color="bg-purple-50 text-[#2B5797]" onClick={() => onNavigate('users')} />
                     <BentoMetric title="Subjects" value={stats.totalSubjects} icon="📚" color="bg-amber-50 text-amber-600" onClick={() => onNavigate('subjects')} />
                     <BentoMetric title="Docs" value={stats.totalDocuments} icon="📄" color="bg-emerald-50 text-emerald-600" onClick={() => onNavigate('subjects')} />
                 </div>
@@ -300,7 +302,7 @@ const OverviewTab: React.FC<{
 };
 
 const BentoMetric: React.FC<{ title: string; value: number; icon: string; color: string; onClick?: () => void }> = ({ title, value, icon, color, onClick }) => (
-    <div onClick={onClick} className={`bg-white rounded-xl border border-slate-200 p-4 shadow-sm flex flex-col items-center justify-center text-center transition-all ${onClick ? 'cursor-pointer hover:border-violet-200 hover:shadow-md' : ''}`}>
+    <div onClick={onClick} className={`bg-white rounded-xl border border-slate-200 p-4 shadow-sm flex flex-col items-center justify-center text-center transition-all ${onClick ? 'cursor-pointer hover:border-[#9DBFE3] hover:shadow-md' : ''}`}>
         <div className={`w-10 h-10 rounded-full flex items-center justify-center text-lg mb-2 ${color}`}>
             {icon}
         </div>
@@ -317,7 +319,122 @@ const UsersTab: React.FC<{
     filter: 'all' | 'student' | 'faculty' | 'admin';
     onFilterChange: (f: 'all' | 'student' | 'faculty' | 'admin') => void;
     totalCounts: { students: number; faculty: number };
-}> = ({ users, search, onSearchChange, filter, onFilterChange, totalCounts }) => {
+    onRefreshUsers: () => void;
+}> = ({ users, search, onSearchChange, filter, onFilterChange, totalCounts, onRefreshUsers }) => {
+    const [toastMsg, setToastMsg] = React.useState('');
+    const [showAddForm, setShowAddForm] = React.useState(false);
+    const [deleteTarget, setDeleteTarget] = React.useState<UserRow | null>(null);
+    const [actionLoading, setActionLoading] = React.useState(false);
+
+    // ─── Add User Form State ───
+    const [newName, setNewName] = React.useState('');
+    const [newEmail, setNewEmail] = React.useState('');
+    const [newPassword, setNewPassword] = React.useState('');
+    const [newRole, setNewRole] = React.useState<'student' | 'faculty'>('student');
+    const [newStudentId, setNewStudentId] = React.useState('');
+    const [newFacultyId, setNewFacultyId] = React.useState('');
+    const [newDepartment, setNewDepartment] = React.useState('');
+    const [newDesignation, setNewDesignation] = React.useState('');
+    const [formError, setFormError] = React.useState('');
+
+    const showToast = (msg: string) => {
+        setToastMsg(msg);
+        setTimeout(() => setToastMsg(''), 4000);
+    };
+
+    const resetForm = () => {
+        setNewName(''); setNewEmail(''); setNewPassword(''); setNewRole('student');
+        setNewStudentId(''); setNewFacultyId(''); setNewDepartment(''); setNewDesignation('');
+        setFormError('');
+    };
+
+    // ─── Add User ───
+    const handleAddUser = async () => {
+        if (!newName.trim() || !newEmail.trim() || !newPassword.trim()) {
+            setFormError('Name, email, and password are required.');
+            return;
+        }
+        if (!newEmail.toLowerCase().endsWith('@vsit.edu.in')) {
+            setFormError('Only @vsit.edu.in emails are allowed.');
+            return;
+        }
+        if (newPassword.length < 6) {
+            setFormError('Password must be at least 6 characters.');
+            return;
+        }
+        setActionLoading(true);
+        setFormError('');
+        try {
+            const metadata: Record<string, any> = { full_name: newName, role: newRole };
+            if (newRole === 'student') {
+                metadata.student_id = newStudentId;
+                metadata.department = newDepartment;
+                metadata.year = 1;
+                metadata.semester = 1;
+            } else {
+                metadata.faculty_id = newFacultyId;
+                metadata.department = newDepartment;
+                metadata.designation = newDesignation;
+            }
+            const { error } = await supabase.auth.signUp({
+                email: newEmail,
+                password: newPassword,
+                options: { data: metadata },
+            });
+            if (error) throw error;
+            showToast(`✅ User "${newName}" created successfully!`);
+            resetForm();
+            setShowAddForm(false);
+            setTimeout(() => onRefreshUsers(), 1000);
+        } catch (err: any) {
+            setFormError(err.message || 'Failed to create user.');
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
+    // ─── Delete User ───
+    const handleDeleteUser = async (user: UserRow) => {
+        setActionLoading(true);
+        try {
+            // Delete role-specific record first
+            if (user.role === 'student') {
+                await supabase.from('student_enrollments').delete().eq('student_id',
+                    (await supabase.from('students').select('id').eq('user_id', user.id).single()).data?.id || ''
+                );
+                await supabase.from('students').delete().eq('user_id', user.id);
+            } else if (user.role === 'faculty') {
+                await supabase.from('faculty_subjects').delete().eq('faculty_id',
+                    (await supabase.from('faculty').select('id').eq('user_id', user.id).single()).data?.id || ''
+                );
+                await supabase.from('faculty').delete().eq('user_id', user.id);
+            }
+            // Delete profile
+            const { error } = await supabase.from('profiles').delete().eq('id', user.id);
+            if (error) throw error;
+            showToast(`🗑️ "${user.full_name}" has been removed.`);
+            setDeleteTarget(null);
+            onRefreshUsers();
+        } catch (err: any) {
+            showToast(`❌ Error: ${err.message || 'Failed to delete user.'}`);
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
+    // ─── Voice Toggle ───
+    const toggleVoiceMode = async (user: UserRow) => {
+        const newValue = !user.prefers_voice;
+        const { error } = await supabase
+            .from('profiles')
+            .update({ prefers_voice: newValue })
+            .eq('id', user.id);
+        if (!error) {
+            showToast(`♿ Accessibility updated for ${user.full_name}. ${newValue ? 'Voice-First mode enabled.' : 'Voice-First mode disabled.'}`);
+            onRefreshUsers();
+        }
+    };
+
     const roleBadge = (role: string) => {
         const styles: Record<string, string> = {
             student: 'bg-blue-50 text-blue-700 border-blue-100',
@@ -333,6 +450,38 @@ const UsersTab: React.FC<{
 
     return (
         <div>
+            {/* Toast */}
+            {toastMsg && (
+                <div className="fixed top-6 right-6 z-50 px-5 py-3 rounded-xl bg-[#2B5797] text-white text-sm font-semibold shadow-2xl shadow-[#6B9AD1]/40 animate-fade-in">
+                    {toastMsg}
+                </div>
+            )}
+
+            {/* Delete Confirmation Modal */}
+            {deleteTarget && (
+                <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center animate-fade-in">
+                    <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full mx-4">
+                        <div className="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-4">
+                            <span className="text-2xl">🗑️</span>
+                        </div>
+                        <h3 className="text-lg font-bold text-gray-900 text-center">Remove User</h3>
+                        <p className="text-sm text-gray-500 text-center mt-2">
+                            Are you sure you want to remove <strong>{deleteTarget.full_name}</strong> ({deleteTarget.email})? This action cannot be undone.
+                        </p>
+                        <div className="flex gap-3 mt-6">
+                            <button onClick={() => setDeleteTarget(null)} disabled={actionLoading}
+                                className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors">
+                                Cancel
+                            </button>
+                            <button onClick={() => handleDeleteUser(deleteTarget)} disabled={actionLoading}
+                                className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold bg-red-600 text-white hover:bg-red-700 transition-colors disabled:opacity-50">
+                                {actionLoading ? 'Removing...' : 'Remove'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Header bar */}
             <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
                 <div>
@@ -358,8 +507,108 @@ const UsersTab: React.FC<{
                         value={search} onChange={e => onSearchChange(e.target.value)}
                         className="px-4 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 w-56"
                     />
+                    {/* Add User Button */}
+                    <button onClick={() => { setShowAddForm(!showAddForm); resetForm(); }}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all ${showAddForm
+                            ? 'bg-gray-200 text-gray-700'
+                            : 'bg-[#2B5797] text-white hover:bg-[#1a3a6e] shadow-sm shadow-[#9DBFE3]'
+                            }`}>
+                        {showAddForm ? '✕ Cancel' : '+ Add User'}
+                    </button>
                 </div>
             </div>
+
+            {/* Add User Form */}
+            {showAddForm && (
+                <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 mb-6 animate-fade-in">
+                    <h3 className="text-sm font-bold text-gray-900 mb-4">Create New User</h3>
+                    {formError && (
+                        <div className="mb-4 px-4 py-2.5 rounded-xl bg-red-50 text-red-600 text-sm font-medium border border-red-100">
+                            {formError}
+                        </div>
+                    )}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div>
+                            <label className="block text-xs font-semibold text-gray-500 mb-1">Full Name *</label>
+                            <input type="text" value={newName} onChange={e => setNewName(e.target.value)}
+                                placeholder="John Doe"
+                                className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#2B5797]/20 focus:border-[#6B9AD1]" />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-semibold text-gray-500 mb-1">Email *</label>
+                            <input type="email" value={newEmail} onChange={e => setNewEmail(e.target.value)}
+                                placeholder="user@vsit.edu.in"
+                                className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#2B5797]/20 focus:border-[#6B9AD1]" />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-semibold text-gray-500 mb-1">Password *</label>
+                            <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)}
+                                placeholder="Min. 6 characters"
+                                className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#2B5797]/20 focus:border-[#6B9AD1]" />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-semibold text-gray-500 mb-1">Role *</label>
+                            <select value={newRole} onChange={e => setNewRole(e.target.value as 'student' | 'faculty')}
+                                className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#2B5797]/20 focus:border-[#6B9AD1] bg-white">
+                                <option value="student">Student</option>
+                                <option value="faculty">Faculty</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    {/* Role-specific fields */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                        {newRole === 'student' ? (
+                            <>
+                                <div>
+                                    <label className="block text-xs font-semibold text-gray-500 mb-1">Student ID</label>
+                                    <input type="text" value={newStudentId} onChange={e => setNewStudentId(e.target.value)}
+                                        placeholder="e.g. 22IT001"
+                                        className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#2B5797]/20 focus:border-[#6B9AD1]" />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-semibold text-gray-500 mb-1">Department</label>
+                                    <input type="text" value={newDepartment} onChange={e => setNewDepartment(e.target.value)}
+                                        placeholder="e.g. IT"
+                                        className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#2B5797]/20 focus:border-[#6B9AD1]" />
+                                </div>
+                            </>
+                        ) : (
+                            <>
+                                <div>
+                                    <label className="block text-xs font-semibold text-gray-500 mb-1">Faculty ID</label>
+                                    <input type="text" value={newFacultyId} onChange={e => setNewFacultyId(e.target.value)}
+                                        placeholder="e.g. FAC001"
+                                        className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#2B5797]/20 focus:border-[#6B9AD1]" />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-semibold text-gray-500 mb-1">Department</label>
+                                    <input type="text" value={newDepartment} onChange={e => setNewDepartment(e.target.value)}
+                                        placeholder="e.g. IT"
+                                        className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#2B5797]/20 focus:border-[#6B9AD1]" />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-semibold text-gray-500 mb-1">Designation</label>
+                                    <input type="text" value={newDesignation} onChange={e => setNewDesignation(e.target.value)}
+                                        placeholder="e.g. Assistant Professor"
+                                        className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#2B5797]/20 focus:border-[#6B9AD1]" />
+                                </div>
+                            </>
+                        )}
+                    </div>
+
+                    <div className="flex justify-end gap-3 mt-5">
+                        <button onClick={() => { setShowAddForm(false); resetForm(); }}
+                            className="px-5 py-2 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-100 transition-colors">
+                            Cancel
+                        </button>
+                        <button onClick={handleAddUser} disabled={actionLoading}
+                            className="px-6 py-2 rounded-xl text-sm font-semibold bg-[#2B5797] text-white hover:bg-[#1a3a6e] transition-colors shadow-sm disabled:opacity-50">
+                            {actionLoading ? 'Creating...' : 'Create User'}
+                        </button>
+                    </div>
+                </div>
+            )}
 
             {/* Table */}
             <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
@@ -370,14 +619,16 @@ const UsersTab: React.FC<{
                             <th className="text-left px-6 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider">Email</th>
                             <th className="text-left px-6 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider">Role</th>
                             <th className="text-left px-6 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider">Created</th>
+                            <th className="text-center px-6 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider">♿ Voice</th>
+                            <th className="text-center px-4 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider">Actions</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-50">
                         {users.map(u => (
-                            <tr key={u.id} className="hover:bg-gray-50 transition-colors">
+                            <tr key={u.id} className="hover:bg-gray-50 transition-colors group">
                                 <td className="px-6 py-4">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-400 to-purple-600 flex items-center justify-center text-white text-xs font-bold">
+                                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#4A7BC5] to-[#2B5797] flex items-center justify-center text-white text-xs font-bold">
                                             {u.full_name.charAt(0).toUpperCase()}
                                         </div>
                                         <span className="text-sm font-semibold text-gray-900">{u.full_name}</span>
@@ -388,11 +639,40 @@ const UsersTab: React.FC<{
                                 <td className="px-6 py-4 text-sm text-gray-400">
                                     {u.created_at ? new Date(u.created_at).toLocaleDateString() : '—'}
                                 </td>
+                                <td className="px-6 py-4 text-center">
+                                    {u.role === 'student' ? (
+                                        <button
+                                            onClick={() => toggleVoiceMode(u)}
+                                            title={u.prefers_voice ? 'Disable voice-first mode' : 'Enable voice-first mode'}
+                                            className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm transition-all ${u.prefers_voice
+                                                ? 'bg-[#E8F0FE] text-[#1a3a6e] border border-[#9DBFE3] ring-2 ring-[#9DBFE3] shadow-sm'
+                                                : 'bg-gray-100 text-gray-400 border border-gray-200 hover:bg-[#E8F0FE] hover:text-[#2B5797]'
+                                                }`}
+                                        >
+                                            ♿
+                                        </button>
+                                    ) : (
+                                        <span className="text-gray-200">—</span>
+                                    )}
+                                </td>
+                                <td className="px-4 py-4 text-center">
+                                    {u.role !== 'admin' ? (
+                                        <button
+                                            onClick={() => setDeleteTarget(u)}
+                                            title={`Remove ${u.full_name}`}
+                                            className="w-8 h-8 rounded-lg flex items-center justify-center text-sm bg-gray-50 text-gray-300 border border-gray-100 opacity-0 group-hover:opacity-100 hover:bg-red-50 hover:text-red-500 hover:border-red-200 transition-all mx-auto"
+                                        >
+                                            🗑️
+                                        </button>
+                                    ) : (
+                                        <span className="text-gray-200">—</span>
+                                    )}
+                                </td>
                             </tr>
                         ))}
                         {users.length === 0 && (
                             <tr>
-                                <td colSpan={4} className="px-6 py-12 text-center text-gray-400 text-sm">No users found.</td>
+                                <td colSpan={6} className="px-6 py-12 text-center text-gray-400 text-sm">No users found.</td>
                             </tr>
                         )}
                     </tbody>
@@ -592,7 +872,7 @@ const SubjectsTab: React.FC<{ subjects: SubjectRow[]; onRefresh: () => Promise<v
                         <p className="text-xs font-semibold text-gray-400 uppercase mt-1">Students Enrolled</p>
                     </div>
                     <div className="bg-white rounded-2xl border border-gray-200 p-5 text-center shadow-sm">
-                        <p className="text-3xl font-bold text-purple-600">{faculty.length}</p>
+                        <p className="text-3xl font-bold text-[#2B5797]">{faculty.length}</p>
                         <p className="text-xs font-semibold text-gray-400 uppercase mt-1">Faculty Assigned</p>
                     </div>
                     <div className="bg-white rounded-2xl border border-gray-200 p-5 text-center shadow-sm">
@@ -673,7 +953,7 @@ const SubjectsTab: React.FC<{ subjects: SubjectRow[]; onRefresh: () => Promise<v
                                     ))}
                                 </select>
                                 <button onClick={assignFaculty} disabled={!assignFacultyId}
-                                    className="px-4 py-2 rounded-lg bg-purple-600 text-white text-sm font-semibold hover:bg-purple-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+                                    className="px-4 py-2 rounded-lg bg-[#2B5797] text-white text-sm font-semibold hover:bg-purple-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
                                     + Add
                                 </button>
                             </div>
@@ -682,7 +962,7 @@ const SubjectsTab: React.FC<{ subjects: SubjectRow[]; onRefresh: () => Promise<v
                                     <div className="px-6 py-8 text-center text-gray-400 text-sm">No faculty assigned yet.</div>
                                 ) : faculty.map((f, i) => (
                                     <div key={i} className="px-6 py-3 flex items-center gap-3 hover:bg-gray-50 transition-colors group">
-                                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center text-white text-xs font-bold shrink-0">
+                                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-400 to-[#2B5797] flex items-center justify-center text-white text-xs font-bold shrink-0">
                                             {(f.profile?.full_name || f.faculty_id || '?').charAt(0).toUpperCase()}
                                         </div>
                                         <div className="min-w-0 flex-1">
@@ -893,7 +1173,7 @@ const SubjectsTab: React.FC<{ subjects: SubjectRow[]; onRefresh: () => Promise<v
                                 <p className="text-[10px] font-semibold text-gray-400 uppercase">Students</p>
                             </div>
                             <div className="text-center flex-1">
-                                <p className="text-lg font-bold text-purple-600">{s.facultyCount}</p>
+                                <p className="text-lg font-bold text-[#2B5797]">{s.facultyCount}</p>
                                 <p className="text-[10px] font-semibold text-gray-400 uppercase">Faculty</p>
                             </div>
                         </div>
@@ -983,7 +1263,7 @@ const StatusItem: React.FC<{ label: string; status: string; color: 'green' | 'bl
         blue: 'text-blue-600 bg-blue-50 border-blue-100',
         yellow: 'text-amber-600 bg-amber-50 border-amber-100',
         red: 'text-red-600 bg-red-50 border-red-100',
-        purple: 'text-purple-600 bg-purple-50 border-purple-100',
+        purple: 'text-[#2B5797] bg-purple-50 border-purple-100',
     };
     return (
         <div className="flex items-center justify-between">

@@ -1,4 +1,6 @@
 import React, { useState, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { BookOpen, CheckCircle, Mic, ShieldCheck, Clock, Smartphone } from 'lucide-react';
 import { supabase } from '../../services/supabaseClient';
 
 interface SignupFormProps {
@@ -11,6 +13,18 @@ interface SignupFormProps {
         extra: any
     ) => Promise<{ needsConfirmation: boolean }>;
 }
+
+const FeatureItem = ({ icon: Icon, title, desc }: { icon: any; title: string; desc: string }) => (
+    <div className="flex items-start gap-3 mb-5">
+        <div className="p-2 bg-blue-100 rounded-lg text-[#2B5797] shrink-0">
+            <Icon size={18} />
+        </div>
+        <div>
+            <h4 className="font-semibold text-[#2B5797] text-sm">{title}</h4>
+            <p className="text-xs text-gray-500">{desc}</p>
+        </div>
+    </div>
+);
 
 const SignupForm: React.FC<SignupFormProps> = ({ onSwitchToLogin, onSignup }) => {
     const [email, setEmail] = useState('');
@@ -35,7 +49,9 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSwitchToLogin, onSignup }) =>
     // Fetch subjects when role switches to faculty
     React.useEffect(() => {
         if (role === 'faculty') {
-            supabase.from('subjects').select('id, subject_name, subject_code')
+            supabase
+                .from('subjects')
+                .select('id, subject_name, subject_code')
                 .then(({ data }) => {
                     if (data) setAvailableSubjects(data);
                 });
@@ -45,7 +61,7 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSwitchToLogin, onSignup }) =>
     // Cooldown timer
     React.useEffect(() => {
         if (resendCooldown <= 0) return;
-        const timer = setInterval(() => setResendCooldown(c => c - 1), 1000);
+        const timer = setInterval(() => setResendCooldown((c) => c - 1), 1000);
         return () => clearInterval(timer);
     }, [resendCooldown]);
 
@@ -65,16 +81,16 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSwitchToLogin, onSignup }) =>
 
         setLoading(true);
         try {
-            const extra = role === 'student'
-                ? { studentId, department, year, semester }
-                : { facultyId, department, designation, subjectId };
+            const extra =
+                role === 'student'
+                    ? { studentId, department, year, semester }
+                    : { facultyId, department, designation, subjectId };
             const result = await onSignup(email, password, fullName, role, extra);
 
             if (result.needsConfirmation) {
                 setShowConfirmation(true);
                 setResendCooldown(60);
             }
-            // If no confirmation needed, AuthContext already signed in
         } catch (err: any) {
             setError(err.message || 'Signup failed');
         } finally {
@@ -99,118 +115,135 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSwitchToLogin, onSignup }) =>
         }
     }, [email, resendCooldown]);
 
-    // ─── EMAIL CONFIRMATION SUCCESS VIEW ───
+    /* ─── INPUT STYLE CONSTANTS ─── */
+    const inputCls =
+        'w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2B5797] focus:border-transparent outline-none transition-all bg-white text-[#212529]';
+    const labelCls = 'block text-sm font-medium text-gray-700 mb-1.5';
+
+    /* ─── EMAIL CONFIRMATION VIEW ─── */
     if (showConfirmation) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-academic-50 via-white to-blue-50 px-4 py-8">
-                <div className="w-full max-w-md text-center">
-                    {/* Animated sparkle wrapper */}
-                    <div style={{ position: 'relative', display: 'inline-block', marginBottom: 24 }}>
-                        <div style={{
-                            width: 96, height: 96, borderRadius: '50%',
-                            background: 'linear-gradient(135deg, #10B981 0%, #34D399 100%)',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            margin: '0 auto', boxShadow: '0 8px 32px rgba(16, 185, 129, 0.35)',
-                            animation: 'confirmPulse 2s ease-in-out infinite',
-                        }}>
-                            <span style={{ fontSize: 48 }}>✉️</span>
+            <div className="flex min-h-screen bg-[#F8F9FA]">
+                {/* Left panel */}
+                <div className="hidden lg:flex w-[42%] bg-white flex-col justify-between p-10 xl:p-12 border-r border-gray-200">
+                    <div>
+                        <div className="flex items-center gap-3 mb-8">
+                            <div className="w-12 h-12 bg-[#2B5797] rounded-lg flex items-center justify-center text-white font-bold text-lg shadow-md">
+                                VSIT
+                            </div>
+                            <h1 className="text-xl xl:text-2xl font-bold text-[#2B5797]">VSIT AI Academic Agent</h1>
                         </div>
-                        {/* Sparkle dots */}
-                        {[...Array(6)].map((_, i) => (
-                            <div key={i} style={{
-                                position: 'absolute',
-                                width: 8, height: 8, borderRadius: '50%',
-                                background: ['#F59E0B', '#8B5CF6', '#3B82F6', '#EF4444', '#10B981', '#EC4899'][i],
-                                top: `${[10, 5, 30, 70, 85, 60][i]}%`,
-                                left: `${[-10, 50, 110, 115, 80, -15][i]}%`,
-                                animation: `sparkle ${1.5 + i * 0.2}s ease-in-out infinite alternate`,
-                                opacity: 0.7,
-                            }} />
-                        ))}
+                        <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-2 rounded-full text-xs font-bold inline-block mb-10">
+                            RE-ACCREDITED: GRADE 'A' BY NAAC
+                        </div>
+                        <FeatureItem icon={BookOpen} title="AI Academic Agent" desc="Personalized learning companion powered by AI" />
+                        <FeatureItem icon={CheckCircle} title="Real-time Performance Tracking" desc="Know your strengths and improve weak areas" />
+                        <FeatureItem icon={Mic} title="Voice-First Interaction" desc="Accessible for all users with VIP mode" />
+                        <FeatureItem icon={ShieldCheck} title="Faculty-Approved Content" desc="All notes vetted by department faculty" />
+                        <FeatureItem icon={Clock} title="Secure Authentication" desc="Enhanced security with email verification" />
+                        <FeatureItem icon={Smartphone} title="Multi-Device Support" desc="Learn anywhere, anytime" />
                     </div>
+                    <div className="text-xs text-gray-400 pt-4 border-t border-gray-100">© 2026 Vidyalankar School of Information Technology</div>
+                </div>
 
-                    <div className="bg-white rounded-2xl shadow-xl shadow-academic-100/50 border border-academic-100 p-8">
-                        <h2 className="text-2xl font-serif font-bold text-academic-900 mb-2">
-                            Check Your Email! 📬
-                        </h2>
-                        <p className="text-academic-500 text-sm mb-6">
-                            We've sent a confirmation link to
-                        </p>
-                        <p className="text-lg font-semibold text-academic-800 bg-academic-50 rounded-xl px-4 py-2 mb-6">
-                            {email}
-                        </p>
-                        <p className="text-sm text-academic-400 mb-6">
-                            Click the link in your email to activate your academic account.
-                            Check your spam folder if you don't see it.
-                        </p>
+                {/* Confirmation panel */}
+                <div className="flex-1 flex items-center justify-center px-6">
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="bg-white rounded-xl shadow-lg border border-gray-100 p-8 max-w-md w-full text-center"
+                    >
+                        <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-6">
+                            <span className="text-4xl">✉️</span>
+                        </div>
+                        <h2 className="text-2xl font-bold text-[#212529] mb-2">Check Your Email! 📬</h2>
+                        <p className="text-gray-500 text-sm mb-4">We've sent a confirmation link to</p>
+                        <p className="text-base font-semibold text-[#2B5797] bg-blue-50 rounded-lg px-4 py-2 mb-6">{email}</p>
+                        <p className="text-sm text-gray-400 mb-6">Click the link in your email to activate your academic account. Check your spam folder if you don't see it.</p>
 
-                        {/* Resend button with cooldown */}
                         <button
                             onClick={handleResendEmail}
                             disabled={resendCooldown > 0}
-                            className="w-full py-3 rounded-xl border border-academic-200 text-academic-700 font-semibold text-sm hover:bg-academic-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed mb-3"
+                            className="w-full py-3 rounded-full border border-gray-300 text-gray-700 font-semibold text-sm hover:bg-gray-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed mb-3"
                         >
-                            {resendCooldown > 0
-                                ? `Resend email in ${resendCooldown}s`
-                                : '🔄 Resend Confirmation Email'}
+                            {resendCooldown > 0 ? `Resend email in ${resendCooldown}s` : '🔄 Resend Confirmation Email'}
                         </button>
-
                         <button
                             onClick={onSwitchToLogin}
-                            className="w-full py-3 rounded-xl bg-gradient-to-r from-academic-600 to-academic-800 text-white font-semibold text-sm shadow-lg shadow-academic-200 hover:shadow-xl transition-all"
+                            className="w-full py-3 rounded-full bg-[#2B5797] text-white font-semibold text-sm hover:bg-[#1a3a6e] transition-colors shadow-md"
                         >
                             Go to Sign In →
                         </button>
 
                         {error && (
-                            <div className="mt-4 px-4 py-3 rounded-xl bg-red-50 border border-red-100 text-red-700 text-sm font-medium">
-                                {error}
-                            </div>
+                            <div className="mt-4 px-4 py-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">{error}</div>
                         )}
-                    </div>
-
-                    {/* Inline animations */}
-                    <style>{`
-                        @keyframes confirmPulse {
-                            0%, 100% { transform: scale(1); box-shadow: 0 8px 32px rgba(16,185,129,0.35); }
-                            50% { transform: scale(1.05); box-shadow: 0 12px 40px rgba(16,185,129,0.5); }
-                        }
-                        @keyframes sparkle {
-                            0% { transform: scale(0.5) translateY(0); opacity: 0.3; }
-                            100% { transform: scale(1.2) translateY(-8px); opacity: 1; }
-                        }
-                    `}</style>
+                    </motion.div>
                 </div>
             </div>
         );
     }
 
-    // ─── SIGNUP FORM ───
+    /* ─── SIGNUP FORM ─── */
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-academic-50 via-white to-blue-50 px-4 py-8">
-            <div className="w-full max-w-md">
-                {/* Logo */}
-                <div className="text-center mb-6">
-                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-academic-600 to-academic-800 text-white mb-4 shadow-lg shadow-academic-200">
-                        <span className="text-2xl font-serif font-bold">AI</span>
+        <div className="flex min-h-screen bg-[#F8F9FA]">
+            {/* ─── Left Column · Feature Panel ─── */}
+            <div className="hidden lg:flex w-[42%] bg-white flex-col justify-between p-10 xl:p-12 border-r border-gray-200">
+                <div>
+                    <div className="flex items-center gap-3 mb-8">
+                        <div className="w-12 h-12 bg-[#2B5797] rounded-lg flex items-center justify-center text-white font-bold text-lg shadow-md">
+                            VSIT
+                        </div>
+                        <h1 className="text-xl xl:text-2xl font-bold text-[#2B5797]">VSIT AI Academic Agent</h1>
                     </div>
-                    <h1 className="text-3xl font-serif font-bold text-academic-900 tracking-tight">Create Account</h1>
-                    <p className="text-academic-500 text-sm mt-1">Join the academic learning platform</p>
+                    <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-2 rounded-full text-xs font-bold inline-block mb-10">
+                        RE-ACCREDITED: GRADE 'A' BY NAAC
+                    </div>
+                    <FeatureItem icon={BookOpen} title="AI Academic Agent" desc="Personalized learning companion powered by AI" />
+                    <FeatureItem icon={CheckCircle} title="Real-time Performance Tracking" desc="Know your strengths and improve weak areas" />
+                    <FeatureItem icon={Mic} title="Voice-First Interaction" desc="Accessible for all users with VIP mode" />
+                    <FeatureItem icon={ShieldCheck} title="Faculty-Approved Content" desc="All notes vetted by department faculty" />
+                    <FeatureItem icon={Clock} title="Secure Authentication" desc="Enhanced security with email verification" />
+                    <FeatureItem icon={Smartphone} title="Multi-Device Support" desc="Learn anywhere, anytime" />
                 </div>
+                <div className="text-xs text-gray-400 pt-4 border-t border-gray-100">© 2026 Vidyalankar School of Information Technology</div>
+            </div>
 
-                {/* Card */}
-                <div className="bg-white rounded-2xl shadow-xl shadow-academic-100/50 border border-academic-100 p-8" style={{ maxHeight: 'calc(100vh - 160px)', overflowY: 'auto' }}>
-                    <form onSubmit={handleSubmit} className="space-y-4">
+            {/* ─── Right Column · Registration Form ─── */}
+            <div className="flex-1 flex items-center justify-center px-6 py-8">
+                <div className="w-full max-w-[480px]">
+                    {/* Mobile logo */}
+                    <div className="lg:hidden flex items-center gap-3 mb-8 justify-center">
+                        <div className="w-10 h-10 bg-[#2B5797] rounded-lg flex items-center justify-center text-white font-bold text-sm">
+                            VSIT
+                        </div>
+                        <h1 className="text-xl font-bold text-[#2B5797]">VSIT AI Academic Agent</h1>
+                    </div>
+
+                    <div className="bg-white p-8 rounded-xl shadow-lg border border-gray-100">
+                        {/* Tab Header */}
+                        <div className="flex border-b border-gray-200 mb-6">
+                            <button
+                                onClick={onSwitchToLogin}
+                                className="flex-1 pb-4 font-semibold text-center text-gray-400 hover:text-gray-600 transition-colors"
+                            >
+                                Login
+                            </button>
+                            <button className="flex-1 pb-4 font-semibold text-center text-[#2B5797] border-b-2 border-[#2B5797]">
+                                Register
+                            </button>
+                        </div>
+
                         {/* Role Selector */}
-                        <div className="flex gap-2 p-1 rounded-xl bg-academic-100">
+                        <div className="flex gap-2 p-1 rounded-lg bg-gray-100 mb-6">
                             {(['student', 'faculty'] as const).map((r) => (
                                 <button
                                     key={r}
                                     type="button"
                                     onClick={() => setRole(r)}
-                                    className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all ${role === r
-                                        ? 'bg-white text-academic-900 shadow-sm'
-                                        : 'text-academic-500 hover:text-academic-700'
+                                    className={`flex-1 py-2 rounded-md text-sm font-semibold transition-all ${role === r
+                                            ? 'bg-white text-[#2B5797] shadow-sm'
+                                            : 'text-gray-500 hover:text-gray-700'
                                         }`}
                                 >
                                     {r === 'student' ? '🎓 Student' : '👨‍🏫 Faculty'}
@@ -218,191 +251,185 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSwitchToLogin, onSignup }) =>
                             ))}
                         </div>
 
-                        <div>
-                            <label className="block text-sm font-semibold text-academic-700 mb-1">Full Name</label>
-                            <input
-                                type="text"
-                                value={fullName}
-                                onChange={(e) => setFullName(e.target.value)}
-                                placeholder="John Doe"
-                                required
-                                className="w-full px-4 py-2.5 rounded-xl border border-academic-200 text-academic-900 placeholder:text-academic-300 focus:outline-none focus:ring-2 focus:ring-academic-500 focus:border-transparent bg-academic-50/50"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-semibold text-academic-700 mb-1">Email</label>
-                            <input
-                                type="email"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                placeholder="yourname@vsit.edu.in"
-                                pattern=".+@vsit\.edu\.in$"
-                                title="Only @vsit.edu.in emails are allowed"
-                                required
-                                className="w-full px-4 py-2.5 rounded-xl border border-academic-200 text-academic-900 placeholder:text-academic-300 focus:outline-none focus:ring-2 focus:ring-academic-500 focus:border-transparent bg-academic-50/50"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-semibold text-academic-700 mb-1">Password</label>
-                            <input
-                                type="password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                placeholder="Min 6 characters"
-                                required
-                                minLength={6}
-                                className="w-full px-4 py-2.5 rounded-xl border border-academic-200 text-academic-900 placeholder:text-academic-300 focus:outline-none focus:ring-2 focus:ring-academic-500 focus:border-transparent bg-academic-50/50"
-                            />
-                        </div>
-
-                        {/* Role-specific fields */}
-                        {role === 'student' ? (
-                            <>
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div>
-                                        <label className="block text-sm font-semibold text-academic-700 mb-1">Student ID</label>
-                                        <input
-                                            type="text"
-                                            value={studentId}
-                                            onChange={(e) => setStudentId(e.target.value)}
-                                            placeholder="STU001"
-                                            required
-                                            className="w-full px-4 py-2.5 rounded-xl border border-academic-200 text-academic-900 placeholder:text-academic-300 focus:outline-none focus:ring-2 focus:ring-academic-500 focus:border-transparent bg-academic-50/50"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-semibold text-academic-700 mb-1">Department</label>
-                                        <select
-                                            value={department}
-                                            onChange={(e) => setDepartment(e.target.value)}
-                                            className="w-full px-4 py-2.5 rounded-xl border border-academic-200 text-academic-900 focus:outline-none focus:ring-2 focus:ring-academic-500 focus:border-transparent bg-academic-50/50"
-                                        >
-                                            <option>Computer Science</option>
-                                            <option>Mathematics</option>
-                                            <option>Physics</option>
-                                            <option>Engineering</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div>
-                                        <label className="block text-sm font-semibold text-academic-700 mb-1">Year</label>
-                                        <select
-                                            value={year}
-                                            onChange={(e) => setYear(Number(e.target.value))}
-                                            className="w-full px-4 py-2.5 rounded-xl border border-academic-200 text-academic-900 focus:outline-none focus:ring-2 focus:ring-academic-500 focus:border-transparent bg-academic-50/50"
-                                        >
-                                            {[1, 2, 3, 4].map((y) => (
-                                                <option key={y} value={y}>Year {y}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-semibold text-academic-700 mb-1">Semester</label>
-                                        <select
-                                            value={semester}
-                                            onChange={(e) => setSemester(Number(e.target.value))}
-                                            className="w-full px-4 py-2.5 rounded-xl border border-academic-200 text-academic-900 focus:outline-none focus:ring-2 focus:ring-academic-500 focus:border-transparent bg-academic-50/50"
-                                        >
-                                            {[1, 2, 3, 4, 5, 6, 7, 8].map((s) => (
-                                                <option key={s} value={s}>Sem {s}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                </div>
-                            </>
-                        ) : (
-                            <>
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div>
-                                        <label className="block text-sm font-semibold text-academic-700 mb-1">Faculty ID</label>
-                                        <input
-                                            type="text"
-                                            value={facultyId}
-                                            onChange={(e) => setFacultyId(e.target.value)}
-                                            placeholder="FAC001"
-                                            required
-                                            className="w-full px-4 py-2.5 rounded-xl border border-academic-200 text-academic-900 placeholder:text-academic-300 focus:outline-none focus:ring-2 focus:ring-academic-500 focus:border-transparent bg-academic-50/50"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-semibold text-academic-700 mb-1">Department</label>
-                                        <select
-                                            value={department}
-                                            onChange={(e) => setDepartment(e.target.value)}
-                                            className="w-full px-4 py-2.5 rounded-xl border border-academic-200 text-academic-900 focus:outline-none focus:ring-2 focus:ring-academic-500 focus:border-transparent bg-academic-50/50"
-                                        >
-                                            <option>Computer Science</option>
-                                            <option>Mathematics</option>
-                                            <option>Physics</option>
-                                            <option>Engineering</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-semibold text-academic-700 mb-1">Designation</label>
-                                    <input
-                                        type="text"
-                                        value={designation}
-                                        onChange={(e) => setDesignation(e.target.value)}
-                                        placeholder="Assistant Professor"
-                                        className="w-full px-4 py-2.5 rounded-xl border border-academic-200 text-academic-900 placeholder:text-academic-300 focus:outline-none focus:ring-2 focus:ring-academic-500 focus:border-transparent bg-academic-50/50"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-semibold text-academic-700 mb-1">Teaching Subject</label>
-                                    <select
-                                        value={subjectId}
-                                        onChange={(e) => setSubjectId(e.target.value)}
-                                        required
-                                        className="w-full px-4 py-2.5 rounded-xl border border-academic-200 text-academic-900 focus:outline-none focus:ring-2 focus:ring-academic-500 focus:border-transparent bg-academic-50/50"
-                                    >
-                                        <option value="">Select a subject...</option>
-                                        {availableSubjects.map((s) => (
-                                            <option key={s.id} value={s.id}>
-                                                {s.subject_name} ({s.subject_code})
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-                            </>
-                        )}
-
-                        {error && (
-                            <div className="px-4 py-3 rounded-xl bg-red-50 border border-red-100 text-red-700 text-sm font-medium">
-                                {error}
-                            </div>
-                        )}
-
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            className="w-full py-3 rounded-xl bg-gradient-to-r from-academic-600 to-academic-800 text-white font-semibold text-sm shadow-lg shadow-academic-200 hover:shadow-xl hover:shadow-academic-300 transition-all disabled:opacity-50"
+                        <motion.form
+                            onSubmit={handleSubmit}
+                            initial={{ opacity: 0, x: 20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            className="space-y-4"
+                            style={{ maxHeight: 'calc(100vh - 340px)', overflowY: 'auto' }}
                         >
-                            {loading ? (
-                                <span className="flex items-center justify-center gap-2">
-                                    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
-                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                                    </svg>
-                                    Creating account...
-                                </span>
-                            ) : `Sign Up as ${role === 'student' ? 'Student' : 'Faculty'}`}
-                        </button>
-                    </form>
+                            <div>
+                                <label className={labelCls}>Full Name</label>
+                                <input
+                                    type="text"
+                                    value={fullName}
+                                    onChange={(e) => setFullName(e.target.value)}
+                                    placeholder="John Doe"
+                                    required
+                                    className={inputCls}
+                                />
+                            </div>
 
-                    <div className="mt-6 text-center">
-                        <p className="text-sm text-academic-500">
-                            Already have an account?{' '}
+                            <div>
+                                <label className={labelCls}>Email (@vsit.edu.in)</label>
+                                <input
+                                    type="email"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    placeholder="yourname@vsit.edu.in"
+                                    pattern=".+@vsit\.edu\.in$"
+                                    title="Only @vsit.edu.in emails are allowed"
+                                    required
+                                    className={inputCls}
+                                />
+                            </div>
+
+                            <div>
+                                <label className={labelCls}>Password</label>
+                                <input
+                                    type="password"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    placeholder="Min 6 characters"
+                                    required
+                                    minLength={6}
+                                    className={inputCls}
+                                />
+                            </div>
+
+                            {/* Role-specific fields */}
+                            {role === 'student' ? (
+                                <>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className={labelCls}>Student ID</label>
+                                            <input
+                                                type="text"
+                                                value={studentId}
+                                                onChange={(e) => setStudentId(e.target.value)}
+                                                placeholder="STU001"
+                                                required
+                                                className={inputCls}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className={labelCls}>Department</label>
+                                            <select value={department} onChange={(e) => setDepartment(e.target.value)} className={inputCls}>
+                                                <option>Computer Science</option>
+                                                <option>IT</option>
+                                                <option>Data Science</option>
+                                                <option>AIDS</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className={labelCls}>Year</label>
+                                            <select value={year} onChange={(e) => setYear(Number(e.target.value))} className={inputCls}>
+                                                {[1, 2, 3, 4].map((y) => (
+                                                    <option key={y} value={y}>
+                                                        Year {y}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className={labelCls}>Semester</label>
+                                            <select value={semester} onChange={(e) => setSemester(Number(e.target.value))} className={inputCls}>
+                                                {[1, 2, 3, 4, 5, 6, 7, 8].map((s) => (
+                                                    <option key={s} value={s}>
+                                                        Sem {s}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    </div>
+                                </>
+                            ) : (
+                                <>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className={labelCls}>Faculty ID</label>
+                                            <input
+                                                type="text"
+                                                value={facultyId}
+                                                onChange={(e) => setFacultyId(e.target.value)}
+                                                placeholder="FAC001"
+                                                required
+                                                className={inputCls}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className={labelCls}>Department</label>
+                                            <select value={department} onChange={(e) => setDepartment(e.target.value)} className={inputCls}>
+                                                <option>Computer Science</option>
+                                                <option>IT</option>
+                                                <option>Data Science</option>
+                                                <option>AIDS</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className={labelCls}>Designation</label>
+                                        <input
+                                            type="text"
+                                            value={designation}
+                                            onChange={(e) => setDesignation(e.target.value)}
+                                            placeholder="Assistant Professor"
+                                            className={inputCls}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className={labelCls}>Teaching Subject</label>
+                                        <select value={subjectId} onChange={(e) => setSubjectId(e.target.value)} required className={inputCls}>
+                                            <option value="">Select a subject...</option>
+                                            {availableSubjects.map((s) => (
+                                                <option key={s.id} value={s.id}>
+                                                    {s.subject_name} ({s.subject_code})
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                </>
+                            )}
+
+                            {error && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: -8 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="px-4 py-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm font-medium"
+                                >
+                                    {error}
+                                </motion.div>
+                            )}
+
                             <button
-                                onClick={onSwitchToLogin}
-                                className="font-semibold text-academic-700 hover:text-academic-900 underline underline-offset-2 transition-colors"
+                                type="submit"
+                                disabled={loading}
+                                className="w-full bg-[#2B5797] text-white py-3 rounded-full font-semibold hover:bg-[#1a3a6e] transition-colors shadow-md disabled:opacity-50 disabled:cursor-not-allowed mt-2"
                             >
-                                Sign In
+                                {loading ? (
+                                    <span className="flex items-center justify-center gap-2">
+                                        <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                                        </svg>
+                                        Creating account...
+                                    </span>
+                                ) : (
+                                    'Create Account'
+                                )}
                             </button>
-                        </p>
+                        </motion.form>
+
+                        <div className="mt-5 text-center">
+                            <p className="text-sm text-gray-500">
+                                Already have an account?{' '}
+                                <button onClick={onSwitchToLogin} className="font-semibold text-[#2B5797] hover:underline transition-colors">
+                                    Sign In
+                                </button>
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>

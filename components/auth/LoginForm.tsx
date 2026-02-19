@@ -53,19 +53,43 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToSignup, onLogin }) => {
         }
     }, []);
 
+    // Link expired / error state
+    const [linkExpired, setLinkExpired] = useState(false);
+    const [linkError, setLinkError] = useState<string | null>(null);
+
     // Listen for PASSWORD_RECOVERY event from Supabase
     useEffect(() => {
         const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
             if (event === 'PASSWORD_RECOVERY') {
                 setIsRecovery(true);
                 setShowForgot(false);
+                setLinkExpired(false);
             }
         });
-        // Also check if URL has recovery hash params
+        // Check URL hash for recovery params or errors
         const hash = window.location.hash;
-        if (hash && (hash.includes('type=recovery') || hash.includes('type=magiclink'))) {
-            setIsRecovery(true);
-            setShowForgot(false);
+        if (hash) {
+            const hashParams = new URLSearchParams(hash.substring(1));
+
+            // Check for errors (expired link, etc.)
+            const errorCode = hashParams.get('error_code');
+            const errorDesc = hashParams.get('error_description');
+            if (errorCode || hashParams.get('error')) {
+                if (errorCode === 'otp_expired') {
+                    setLinkExpired(true);
+                    setLinkError('This password reset link has expired. Please request a new one.');
+                } else {
+                    setLinkExpired(true);
+                    setLinkError(errorDesc?.replace(/\+/g, ' ') || 'This link is invalid or has expired.');
+                }
+                // Clean up the URL
+                window.history.replaceState({}, '', window.location.pathname);
+            }
+            // Check for valid recovery token
+            else if (hash.includes('type=recovery') || hash.includes('type=magiclink')) {
+                setIsRecovery(true);
+                setShowForgot(false);
+            }
         }
         return () => subscription.unsubscribe();
     }, []);
@@ -193,7 +217,37 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToSignup, onLogin }) => {
                     </div>
 
                     <div className="bg-white p-8 rounded-xl shadow-lg border border-gray-100">
-                        {isRecovery ? (
+                        {linkExpired ? (
+                            /* ── Link Expired / Error State ── */
+                            <div className="text-center py-4">
+                                <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-5">
+                                    <Mail className="text-amber-600" size={30} />
+                                </div>
+                                <h3 className="font-bold text-lg text-[#212529] mb-2">Link Expired</h3>
+                                <p className="text-sm text-gray-500 mb-6 max-w-xs mx-auto">
+                                    {linkError || 'This password reset link has expired or is invalid.'}
+                                </p>
+                                <button
+                                    onClick={() => {
+                                        setLinkExpired(false);
+                                        setLinkError(null);
+                                        setShowForgot(true);
+                                    }}
+                                    className="w-full py-3 bg-[#2B5797] text-white rounded-xl font-semibold text-sm hover:bg-[#1e3f6e] transition-colors mb-3"
+                                >
+                                    Request New Reset Link
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        setLinkExpired(false);
+                                        setLinkError(null);
+                                    }}
+                                    className="w-full py-2.5 text-[#2B5797] text-sm font-medium hover:underline"
+                                >
+                                    ← Back to Login
+                                </button>
+                            </div>
+                        ) : isRecovery ? (
                             /* ── Set New Password Form (after clicking reset link) ── */
                             <div>
                                 <div className="border-b border-gray-200 mb-6">

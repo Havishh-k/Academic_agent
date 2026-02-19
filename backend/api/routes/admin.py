@@ -291,6 +291,7 @@ async def create_user(request: CreateUserRequest):
 
 class ResetPasswordRequest(BaseModel):
     email: str
+    redirect_to: str = "http://localhost:5173/login"
 
 
 @router.post("/reset-password")
@@ -306,6 +307,7 @@ async def reset_password(request: ResetPasswordRequest):
                 },
                 json={
                     "email": request.email,
+                    "redirect_to": request.redirect_to,
                 },
             )
             if res.status_code >= 400:

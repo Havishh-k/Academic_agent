@@ -338,7 +338,7 @@ const AdminUsersPage: React.FC = () => {
             const res = await fetch(`${backendUrl}/api/admin/reset-password`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email: user.email }),
+                body: JSON.stringify({ email: user.email, redirect_to: `${window.location.origin}/login` }),
             });
             const result = await res.json();
             if (!res.ok) throw new Error(result.detail || 'Failed to send reset email');

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { BookOpen, CheckCircle, Mic, ShieldCheck, Clock, Smartphone } from 'lucide-react';
+import { BookOpen, CheckCircle, Mic, ShieldCheck, Clock, Smartphone, ArrowLeft, Mail } from 'lucide-react';
+import { supabase } from '../../services/supabaseClient';
 
 interface LoginFormProps {
     onSwitchToSignup: () => void;
@@ -24,6 +25,11 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToSignup, onLogin }) => {
     const [password, setPassword] = useState('');
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
+    const [showForgot, setShowForgot] = useState(false);
+    const [resetEmail, setResetEmail] = useState('');
+    const [resetSent, setResetSent] = useState(false);
+    const [resetLoading, setResetLoading] = useState(false);
+    const [resetError, setResetError] = useState<string | null>(null);
 
     // Detect email confirmation redirect
     const [showConfirmed, setShowConfirmed] = useState(false);
@@ -53,6 +59,29 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToSignup, onLogin }) => {
             setError(err.message || 'Login failed');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleForgotPassword = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setResetError(null);
+
+        if (!resetEmail.toLowerCase().endsWith('@vsit.edu.in')) {
+            setResetError('Only @vsit.edu.in email addresses are allowed.');
+            return;
+        }
+
+        setResetLoading(true);
+        try {
+            const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+                redirectTo: `${window.location.origin}/login`,
+            });
+            if (error) throw error;
+            setResetSent(true);
+        } catch (err: any) {
+            setResetError(err.message || 'Failed to send reset email');
+        } finally {
+            setResetLoading(false);
         }
     };
 
@@ -103,128 +132,204 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToSignup, onLogin }) => {
                     </div>
 
                     <div className="bg-white p-8 rounded-xl shadow-lg border border-gray-100">
-                        {/* Tab Header */}
-                        <div className="flex border-b border-gray-200 mb-8">
-                            <button className="flex-1 pb-4 font-semibold text-center text-[#2B5797] border-b-2 border-[#2B5797]">
-                                Login
-                            </button>
-                            <button
-                                onClick={onSwitchToSignup}
-                                className="flex-1 pb-4 font-semibold text-center text-gray-400 hover:text-gray-600 transition-colors"
-                            >
-                                Register
-                            </button>
-                        </div>
-
-                        {/* Email confirmed banner */}
-                        <AnimatePresence>
-                            {showConfirmed && (
-                                <motion.div
-                                    initial={{ opacity: 0, height: 0 }}
-                                    animate={{ opacity: 1, height: 'auto' }}
-                                    exit={{ opacity: 0, height: 0 }}
-                                    className="mb-6 flex items-center gap-3 px-4 py-3 rounded-lg bg-green-50 border border-green-200"
-                                >
-                                    <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center shrink-0">
-                                        <CheckCircle size={16} className="text-white" />
-                                    </div>
-                                    <div>
-                                        <p className="font-semibold text-green-800 text-sm">Email Confirmed! 🎉</p>
-                                        <p className="text-green-600 text-xs">Your account is active. Sign in below.</p>
-                                    </div>
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
-
-                        {/* Login Form */}
-                        <motion.form
-                            onSubmit={handleSubmit}
-                            initial={{ opacity: 0, x: -20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            className="space-y-5"
-                        >
+                        {showForgot ? (
+                            /* ── Forgot Password Form ── */
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    VSIT Email ID
-                                </label>
-                                <input
-                                    type="email"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    placeholder="student@vsit.edu.in"
-                                    pattern=".+@vsit\.edu\.in$"
-                                    title="Only @vsit.edu.in emails are allowed"
-                                    required
-                                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2B5797] focus:border-transparent outline-none transition-all"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Password
-                                </label>
-                                <input
-                                    type="password"
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    placeholder="••••••••"
-                                    required
-                                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2B5797] focus:border-transparent outline-none transition-all"
-                                />
-                            </div>
-
-                            <div className="text-right">
-                                <button type="button" className="text-sm text-[#2B5797] hover:underline font-medium">
-                                    Forgot password?
-                                </button>
-                            </div>
-
-                            {error && (
-                                <motion.div
-                                    initial={{ opacity: 0, y: -8 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    className="px-4 py-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm font-medium"
-                                >
-                                    {error}
-                                </motion.div>
-                            )}
-
-                            <button
-                                type="submit"
-                                disabled={loading}
-                                className="w-full bg-[#2B5797] text-white py-3 rounded-full font-semibold hover:bg-[#1a3a6e] transition-colors shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                {loading ? (
-                                    <span className="flex items-center justify-center gap-2">
-                                        <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
-                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                                        </svg>
-                                        Signing in...
-                                    </span>
-                                ) : (
-                                    'Login to Portal'
-                                )}
-                            </button>
-                        </motion.form>
-
-                        {/* Switch to signup */}
-                        <div className="mt-6 text-center">
-                            <p className="text-sm text-gray-500">
-                                Don't have an account?{' '}
                                 <button
-                                    onClick={onSwitchToSignup}
-                                    className="font-semibold text-[#2B5797] hover:underline transition-colors"
+                                    onClick={() => { setShowForgot(false); setResetSent(false); setResetError(null); }}
+                                    className="flex items-center gap-1.5 text-sm text-[#2B5797] hover:underline font-medium mb-6"
                                 >
-                                    Register
+                                    <ArrowLeft size={14} /> Back to Login
                                 </button>
-                            </p>
-                        </div>
+
+                                <div className="border-b border-gray-200 mb-6">
+                                    <div className="pb-4 font-semibold text-center text-[#2B5797] border-b-2 border-[#2B5797]">
+                                        Reset Password
+                                    </div>
+                                </div>
+
+                                {resetSent ? (
+                                    <motion.div
+                                        initial={{ opacity: 0, scale: 0.95 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        className="text-center py-6"
+                                    >
+                                        <div className="w-14 h-14 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                                            <Mail size={24} className="text-green-500" />
+                                        </div>
+                                        <h3 className="font-bold text-[#212529] mb-2">Check your email</h3>
+                                        <p className="text-sm text-gray-500 mb-1">
+                                            We've sent a password reset link to
+                                        </p>
+                                        <p className="text-sm font-semibold text-[#2B5797] mb-4">{resetEmail}</p>
+                                        <p className="text-xs text-gray-400">
+                                            Didn't receive it? Check your spam folder or try again.
+                                        </p>
+                                    </motion.div>
+                                ) : (
+                                    <motion.form
+                                        onSubmit={handleForgotPassword}
+                                        initial={{ opacity: 0, x: -20 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        className="space-y-5"
+                                    >
+                                        <p className="text-sm text-gray-500">
+                                            Enter your VSIT email address and we'll send you a link to reset your password.
+                                        </p>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                VSIT Email ID
+                                            </label>
+                                            <input
+                                                type="email"
+                                                value={resetEmail}
+                                                onChange={(e) => setResetEmail(e.target.value)}
+                                                placeholder="student@vsit.edu.in"
+                                                required
+                                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2B5797] focus:border-transparent outline-none transition-all"
+                                            />
+                                        </div>
+
+                                        {resetError && (
+                                            <motion.div
+                                                initial={{ opacity: 0, y: -8 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                className="px-4 py-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm font-medium"
+                                            >
+                                                {resetError}
+                                            </motion.div>
+                                        )}
+
+                                        <button
+                                            type="submit"
+                                            disabled={resetLoading}
+                                            className="w-full bg-[#2B5797] text-white py-3 rounded-full font-semibold hover:bg-[#1a3a6e] transition-colors shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            {resetLoading ? (
+                                                <span className="flex items-center justify-center gap-2">
+                                                    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                                                    </svg>
+                                                    Sending...
+                                                </span>
+                                            ) : (
+                                                'Send Reset Link'
+                                            )}
+                                        </button>
+                                    </motion.form>
+                                )}
+                            </div>
+                        ) : (
+                            /* ── Normal Login Form ── */
+                            <>
+                                {/* Header */}
+                                <div className="border-b border-gray-200 mb-8">
+                                    <div className="pb-4 font-semibold text-center text-[#2B5797] border-b-2 border-[#2B5797]">
+                                        Login
+                                    </div>
+                                </div>
+
+                                {/* Email confirmed banner */}
+                                <AnimatePresence>
+                                    {showConfirmed && (
+                                        <motion.div
+                                            initial={{ opacity: 0, height: 0 }}
+                                            animate={{ opacity: 1, height: 'auto' }}
+                                            exit={{ opacity: 0, height: 0 }}
+                                            className="mb-6 flex items-center gap-3 px-4 py-3 rounded-lg bg-green-50 border border-green-200"
+                                        >
+                                            <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center shrink-0">
+                                                <CheckCircle size={16} className="text-white" />
+                                            </div>
+                                            <div>
+                                                <p className="font-semibold text-green-800 text-sm">Email Confirmed! 🎉</p>
+                                                <p className="text-green-600 text-xs">Your account is active. Sign in below.</p>
+                                            </div>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+
+                                {/* Login Form */}
+                                <motion.form
+                                    onSubmit={handleSubmit}
+                                    initial={{ opacity: 0, x: -20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    className="space-y-5"
+                                >
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            VSIT Email ID
+                                        </label>
+                                        <input
+                                            type="email"
+                                            value={email}
+                                            onChange={(e) => setEmail(e.target.value)}
+                                            placeholder="student@vsit.edu.in"
+                                            pattern=".+@vsit\.edu\.in$"
+                                            title="Only @vsit.edu.in emails are allowed"
+                                            required
+                                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2B5797] focus:border-transparent outline-none transition-all"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            Password
+                                        </label>
+                                        <input
+                                            type="password"
+                                            value={password}
+                                            onChange={(e) => setPassword(e.target.value)}
+                                            placeholder="••••••••"
+                                            required
+                                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2B5797] focus:border-transparent outline-none transition-all"
+                                        />
+                                    </div>
+
+                                    <div className="text-right">
+                                        <button
+                                            type="button"
+                                            onClick={() => { setShowForgot(true); setResetEmail(email); setResetError(null); setResetSent(false); }}
+                                            className="text-sm text-[#2B5797] hover:underline font-medium"
+                                        >
+                                            Forgot password?
+                                        </button>
+                                    </div>
+
+                                    {error && (
+                                        <motion.div
+                                            initial={{ opacity: 0, y: -8 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            className="px-4 py-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm font-medium"
+                                        >
+                                            {error}
+                                        </motion.div>
+                                    )}
+
+                                    <button
+                                        type="submit"
+                                        disabled={loading}
+                                        className="w-full bg-[#2B5797] text-white py-3 rounded-full font-semibold hover:bg-[#1a3a6e] transition-colors shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        {loading ? (
+                                            <span className="flex items-center justify-center gap-2">
+                                                <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                                                </svg>
+                                                Signing in...
+                                            </span>
+                                        ) : (
+                                            'Login to Portal'
+                                        )}
+                                    </button>
+                                </motion.form>
+                            </>
+                        )}
                     </div>
 
-                    <p className="text-center text-xs text-gray-400 mt-6">
-                        Multi-Agent Academic System • Powered by Groq + Supabase
-                    </p>
+
                 </div>
             </div>
         </div>

@@ -15,27 +15,34 @@ import {
     ChevronRight,
 } from 'lucide-react';
 
+// Shared type for nav item IDs
+export type StudentNavId = 'dashboard' | 'subjects' | 'notes' | 'assignments' | 'performance' | 'ai' | 'settings';
+export type FacultyNavId = 'dashboard' | 'materials' | 'quizgen' | 'reports' | 'settings';
+export type AdminNavId = 'dashboard' | 'users' | 'subjects' | 'audit-logs' | 'analytics' | 'settings';
+export type NavId = StudentNavId | FacultyNavId | AdminNavId;
+
 interface AppSidebarProps {
     userRole: UserRole;
     subjects: any[];
-    onNavigate: (view: 'home' | 'admin' | 'subject', data?: any) => void;
-    activeView: 'home' | 'admin' | 'subject';
+    activeNavId: NavId;
+    onNavClick: (navId: NavId) => void;
+    onSubjectClick: (subject: any) => void;
     onSignOut: () => void;
     userProfile: { full_name: string; email: string };
 }
 
 interface NavItem {
-    id: string;
+    id: NavId;
     label: string;
     icon: React.ElementType;
-    view: 'home' | 'admin' | 'subject';
 }
 
 const AppSidebar: React.FC<AppSidebarProps> = ({
     userRole,
     subjects,
-    onNavigate,
-    activeView,
+    activeNavId,
+    onNavClick,
+    onSubjectClick,
     onSignOut,
     userProfile,
 }) => {
@@ -43,30 +50,32 @@ const AppSidebar: React.FC<AppSidebarProps> = ({
     const getNavItems = (): NavItem[] => {
         if (userRole === UserRole.ADMIN) {
             return [
-                { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, view: 'admin' },
-                { id: 'users', label: 'User Management', icon: Users, view: 'admin' },
-                { id: 'analytics', label: 'Analytics', icon: BarChart2, view: 'admin' },
-                { id: 'settings', label: 'Settings', icon: Settings, view: 'admin' },
+                { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+                { id: 'users', label: 'User Management', icon: Users },
+                { id: 'subjects', label: 'Subjects', icon: BookOpen },
+                { id: 'audit-logs', label: 'Audit Logs', icon: ClipboardList },
+                { id: 'analytics', label: 'Analytics', icon: BarChart2 },
+                { id: 'settings', label: 'Settings', icon: Settings },
             ];
         }
         if (userRole === UserRole.FACULTY) {
             return [
-                { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, view: 'home' },
-                { id: 'materials', label: 'Materials', icon: Upload, view: 'home' },
-                { id: 'quizgen', label: 'Quiz Generator', icon: ClipboardList, view: 'home' },
-                { id: 'reports', label: 'Student Reports', icon: BarChart2, view: 'home' },
-                { id: 'settings', label: 'Settings', icon: Settings, view: 'home' },
+                { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+                { id: 'materials', label: 'Materials', icon: Upload },
+                { id: 'quizgen', label: 'Quiz Generator', icon: ClipboardList },
+                { id: 'reports', label: 'Student Reports', icon: BarChart2 },
+                { id: 'settings', label: 'Settings', icon: Settings },
             ];
         }
         // Student
         return [
-            { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, view: 'home' },
-            { id: 'subjects', label: 'My Subjects', icon: BookOpen, view: 'home' },
-            { id: 'notes', label: 'Course Notes', icon: FileText, view: 'home' },
-            { id: 'assignments', label: 'Assignments', icon: CheckSquare, view: 'home' },
-            { id: 'performance', label: 'Performance', icon: BarChart2, view: 'home' },
-            { id: 'ai', label: 'AI Tutor', icon: Bot, view: 'home' },
-            { id: 'settings', label: 'Settings', icon: Settings, view: 'home' },
+            { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+            { id: 'subjects', label: 'My Subjects', icon: BookOpen },
+            { id: 'notes', label: 'Course Notes', icon: FileText },
+            { id: 'assignments', label: 'Assignments', icon: CheckSquare },
+            { id: 'performance', label: 'Performance', icon: BarChart2 },
+            { id: 'ai', label: 'AI Tutor', icon: Bot },
+            { id: 'settings', label: 'Settings', icon: Settings },
         ];
     };
 
@@ -100,16 +109,14 @@ const AppSidebar: React.FC<AppSidebarProps> = ({
                 </div>
                 <div className="space-y-1">
                     {navItems.map((item) => {
-                        const isActive =
-                            (item.id === 'dashboard' && activeView === 'home' && !subjects.some(() => false)) ||
-                            (item.view === 'admin' && activeView === 'admin' && item.id === 'dashboard');
+                        const isActive = activeNavId === item.id;
                         return (
                             <button
                                 key={item.id}
-                                onClick={() => onNavigate(item.view)}
+                                onClick={() => onNavClick(item.id)}
                                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all group ${isActive
-                                        ? 'bg-[#E8F0FE] text-[#2B5797] border-l-4 border-[#2B5797] -ml-[4px] pl-[16px]'
-                                        : 'text-[#495057] hover:bg-gray-50 hover:text-[#212529]'
+                                    ? 'bg-[#E8F0FE] text-[#2B5797]'
+                                    : 'text-[#495057] hover:bg-gray-50 hover:text-[#212529]'
                                     }`}
                             >
                                 <item.icon
@@ -132,11 +139,8 @@ const AppSidebar: React.FC<AppSidebarProps> = ({
                             {subjects.slice(0, 6).map((sub) => (
                                 <button
                                     key={sub.id}
-                                    onClick={() => onNavigate('subject', sub)}
-                                    className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all group ${activeView === 'subject'
-                                            ? 'text-[#495057] hover:bg-gray-50'
-                                            : 'text-[#495057] hover:bg-[#E8F0FE] hover:text-[#2B5797]'
-                                        }`}
+                                    onClick={() => onSubjectClick(sub)}
+                                    className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all group text-[#495057] hover:bg-[#E8F0FE] hover:text-[#2B5797]"
                                 >
                                     <div className="w-2 h-2 rounded-full bg-[#6264A7] shrink-0" />
                                     <span className="truncate">{sub.subject_name || sub.subject_code}</span>

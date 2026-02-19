@@ -212,3 +212,110 @@ async def list_users(
         return {"users": res.json(), "page": page, "page_size": page_size}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ─── Create User with Password ───────────────────────────────
+
+class CreateUserRequest(BaseModel):
+    email: str
+    password: str
+    full_name: str
+    role: str = "student"
+
+
+@router.post("/create-user")
+async def create_user(request: CreateUserRequest):
+    """
+    Create a new user via Supabase Auth signup API.
+    This creates an auth user AND the profile row is auto-created
+    by the existing database trigger.
+    """
+    if request.role not in ("student", "faculty", "admin"):
+        raise HTTPException(status_code=400, detail="Invalid role. Must be student, faculty, or admin.")
+    if len(request.password) < 6:
+        raise HTTPException(status_code=400, detail="Password must be at least 6 characters.")
+
+    try:
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            # Step 1: Create auth user via Supabase GoTrue signup
+            signup_res = await client.post(
+                f"{SUPABASE_URL}/auth/v1/signup",
+                headers={
+                    "apikey": SUPABASE_ANON_KEY,
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "email": request.email,
+                    "password": request.password,
+                    "data": {
+                        "full_name": request.full_name,
+                        "role": request.role,
+                    },
+                },
+            )
+
+            if signup_res.status_code >= 400:
+                error_body = signup_res.json()
+                error_msg = error_body.get("msg") or error_body.get("error_description") or error_body.get("message") or "Signup failed"
+                raise HTTPException(status_code=signup_res.status_code, detail=error_msg)
+
+            user_data = signup_res.json()
+            user_id = user_data.get("id") or (user_data.get("user", {}) or {}).get("id")
+
+            # Step 2: Update the profile row with correct role and name
+            # (the trigger may have created it with defaults)
+            if user_id:
+                await client.patch(
+                    f"{SUPABASE_URL}/rest/v1/profiles",
+                    headers=_headers(),
+                    params={"id": f"eq.{user_id}"},
+                    json={
+                        "full_name": request.full_name,
+                        "role": request.role,
+                    },
+                )
+
+        return {
+            "status": "created",
+            "user_id": user_id,
+            "email": request.email,
+            "role": request.role,
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ─── Reset Password ──────────────────────────────────────────
+
+class ResetPasswordRequest(BaseModel):
+    email: str
+
+
+@router.post("/reset-password")
+async def reset_password(request: ResetPasswordRequest):
+    """Send a password reset email via Supabase Auth."""
+    try:
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            res = await client.post(
+                f"{SUPABASE_URL}/auth/v1/recover",
+                headers={
+                    "apikey": SUPABASE_ANON_KEY,
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "email": request.email,
+                },
+            )
+            if res.status_code >= 400:
+                error_body = res.json()
+                error_msg = error_body.get("msg") or error_body.get("message") or "Failed to send reset email"
+                raise HTTPException(status_code=res.status_code, detail=error_msg)
+
+        return {"status": "sent", "email": request.email}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+

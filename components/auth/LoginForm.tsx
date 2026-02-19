@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { BookOpen, CheckCircle, Mic, ShieldCheck, Clock, Smartphone, ArrowLeft, Mail } from 'lucide-react';
+import { BookOpen, CheckCircle, Mic, ShieldCheck, Clock, Smartphone, ArrowLeft, Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { supabase } from '../../services/supabaseClient';
 
 interface LoginFormProps {
@@ -33,6 +33,16 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToSignup, onLogin }) => {
 
     // Detect email confirmation redirect
     const [showConfirmed, setShowConfirmed] = useState(false);
+
+    // Password recovery flow
+    const [isRecovery, setIsRecovery] = useState(false);
+    const [newPassword, setNewPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [recoveryLoading, setRecoveryLoading] = useState(false);
+    const [recoveryError, setRecoveryError] = useState<string | null>(null);
+    const [recoverySuccess, setRecoverySuccess] = useState(false);
+    const [showNewPassword, setShowNewPassword] = useState(false);
+
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
         if (params.get('confirmed') === 'true') {
@@ -42,6 +52,57 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToSignup, onLogin }) => {
             return () => clearTimeout(t);
         }
     }, []);
+
+    // Listen for PASSWORD_RECOVERY event from Supabase
+    useEffect(() => {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+            if (event === 'PASSWORD_RECOVERY') {
+                setIsRecovery(true);
+                setShowForgot(false);
+            }
+        });
+        // Also check if URL has recovery hash params
+        const hash = window.location.hash;
+        if (hash && (hash.includes('type=recovery') || hash.includes('type=magiclink'))) {
+            setIsRecovery(true);
+            setShowForgot(false);
+        }
+        return () => subscription.unsubscribe();
+    }, []);
+
+    const handleSetNewPassword = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setRecoveryError(null);
+
+        if (newPassword.length < 6) {
+            setRecoveryError('Password must be at least 6 characters.');
+            return;
+        }
+        if (newPassword !== confirmPassword) {
+            setRecoveryError('Passwords do not match.');
+            return;
+        }
+
+        setRecoveryLoading(true);
+        try {
+            const { error } = await supabase.auth.updateUser({ password: newPassword });
+            if (error) throw error;
+            setRecoverySuccess(true);
+            // Clear URL hash
+            window.history.replaceState({}, '', window.location.pathname);
+            // After 3s, reset to login view
+            setTimeout(() => {
+                setIsRecovery(false);
+                setRecoverySuccess(false);
+                setNewPassword('');
+                setConfirmPassword('');
+            }, 3000);
+        } catch (err: any) {
+            setRecoveryError(err.message || 'Failed to update password');
+        } finally {
+            setRecoveryLoading(false);
+        }
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -132,7 +193,92 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToSignup, onLogin }) => {
                     </div>
 
                     <div className="bg-white p-8 rounded-xl shadow-lg border border-gray-100">
-                        {showForgot ? (
+                        {isRecovery ? (
+                            /* ── Set New Password Form (after clicking reset link) ── */
+                            <div>
+                                <div className="border-b border-gray-200 mb-6">
+                                    <div className="pb-4 font-semibold text-center text-[#2B5797] border-b-2 border-[#2B5797]">
+                                        Set New Password
+                                    </div>
+                                </div>
+
+                                {recoverySuccess ? (
+                                    <motion.div
+                                        initial={{ opacity: 0, scale: 0.95 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        className="text-center py-6"
+                                    >
+                                        <div className="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                            <CheckCircle className="text-green-600" size={28} />
+                                        </div>
+                                        <h3 className="font-bold text-lg text-[#212529] mb-1">Password Updated!</h3>
+                                        <p className="text-sm text-gray-500">Your password has been changed successfully. Redirecting to login...</p>
+                                    </motion.div>
+                                ) : (
+                                    <form onSubmit={handleSetNewPassword} className="space-y-5">
+                                        <p className="text-sm text-gray-500 text-center mb-4">
+                                            Enter your new password below.
+                                        </p>
+
+                                        {recoveryError && (
+                                            <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm">
+                                                {recoveryError}
+                                            </div>
+                                        )}
+
+                                        <div>
+                                            <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">New Password</label>
+                                            <div className="relative">
+                                                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"><Lock size={16} /></div>
+                                                <input
+                                                    type={showNewPassword ? 'text' : 'password'}
+                                                    value={newPassword}
+                                                    onChange={e => setNewPassword(e.target.value)}
+                                                    placeholder="Min 6 characters"
+                                                    required
+                                                    minLength={6}
+                                                    className="w-full pl-10 pr-10 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:border-[#2B5797] focus:ring-2 focus:ring-[#2B5797]/10 transition-all"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowNewPassword(p => !p)}
+                                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#2B5797]"
+                                                >
+                                                    {showNewPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">Confirm Password</label>
+                                            <div className="relative">
+                                                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"><Lock size={16} /></div>
+                                                <input
+                                                    type={showNewPassword ? 'text' : 'password'}
+                                                    value={confirmPassword}
+                                                    onChange={e => setConfirmPassword(e.target.value)}
+                                                    placeholder="Re-enter password"
+                                                    required
+                                                    minLength={6}
+                                                    className="w-full pl-10 pr-10 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:border-[#2B5797] focus:ring-2 focus:ring-[#2B5797]/10 transition-all"
+                                                />
+                                            </div>
+                                            {confirmPassword && newPassword !== confirmPassword && (
+                                                <p className="text-xs text-red-500 mt-1.5">Passwords do not match</p>
+                                            )}
+                                        </div>
+
+                                        <button
+                                            type="submit"
+                                            disabled={recoveryLoading || newPassword.length < 6 || newPassword !== confirmPassword}
+                                            className="w-full py-3 bg-[#2B5797] text-white rounded-xl font-semibold text-sm hover:bg-[#1e3f6e] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            {recoveryLoading ? 'Updating...' : 'Update Password'}
+                                        </button>
+                                    </form>
+                                )}
+                            </div>
+                        ) : showForgot ? (
                             /* ── Forgot Password Form ── */
                             <div>
                                 <button

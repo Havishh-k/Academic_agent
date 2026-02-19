@@ -7,7 +7,8 @@ import {
     TrendingUp, Clock, AlertCircle, CheckCircle2, Plus,
     Eye, Mail, MoreHorizontal, ArrowRight,
     GraduationCap, UserCheck, Volume2, Mic, FolderOpen,
-    ClipboardList, Hash, Calendar, Filter, Trash2, ChevronDown
+    ClipboardList, Hash, Calendar, Filter, Trash2, ChevronDown,
+    KeyRound, EyeOff
 } from 'lucide-react';
 
 interface AdminDashboardProps {
@@ -245,7 +246,8 @@ const AdminUsersPage: React.FC = () => {
     const [showAddUser, setShowAddUser] = useState(false);
     const [users, setUsers] = useState<UserRecord[]>([]);
     const [loading, setLoading] = useState(true);
-    const [addForm, setAddForm] = useState({ name: '', email: '', role: 'student' });
+    const [addForm, setAddForm] = useState({ name: '', email: '', role: 'student', password: '' });
+    const [showPassword, setShowPassword] = useState(false);
     const [addError, setAddError] = useState('');
     const [addLoading, setAddLoading] = useState(false);
 
@@ -293,30 +295,32 @@ const AdminUsersPage: React.FC = () => {
     };
 
     const handleAddUser = async () => {
-        if (!addForm.name.trim() || !addForm.email.trim()) return;
+        if (!addForm.name.trim() || !addForm.email.trim() || !addForm.password.trim()) return;
+        if (addForm.password.length < 6) {
+            setAddError('Password must be at least 6 characters.');
+            return;
+        }
         setAddLoading(true);
         setAddError('');
         try {
-            // Create user in Supabase Auth (via admin API or direct insert)
-            // Since we can't call admin API from client, we insert into profiles directly
-            // The user will need to sign up through the login page for auth
-            const { data: existing } = await supabase.from('profiles').select('id').eq('email', addForm.email.trim()).single();
-            if (existing) {
-                setAddError('A user with this email already exists.');
-                setAddLoading(false);
-                return;
+            // Call backend API to create auth user with password
+            const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
+            const res = await fetch(`${backendUrl}/api/admin/create-user`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    email: addForm.email.trim(),
+                    password: addForm.password,
+                    full_name: addForm.name.trim(),
+                    role: addForm.role,
+                }),
+            });
+            const result = await res.json();
+            if (!res.ok) {
+                throw new Error(result.detail || 'Failed to create user');
             }
 
-            const { error } = await supabase.from('profiles').insert({
-                id: crypto.randomUUID(),
-                email: addForm.email.trim(),
-                full_name: addForm.name.trim(),
-                role: addForm.role,
-                prefers_voice: false,
-            });
-            if (error) throw error;
-
-            setAddForm({ name: '', email: '', role: 'student' });
+            setAddForm({ name: '', email: '', role: 'student', password: '' });
             setShowAddUser(false);
             await fetchUsers();
         } catch (e: any) {
@@ -324,6 +328,24 @@ const AdminUsersPage: React.FC = () => {
             setAddError(e?.message || 'Failed to create user. Please try again.');
         } finally {
             setAddLoading(false);
+        }
+    };
+
+    const handleResetPassword = async (user: UserRecord) => {
+        setMoreUser(null);
+        try {
+            const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
+            const res = await fetch(`${backendUrl}/api/admin/reset-password`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: user.email }),
+            });
+            const result = await res.json();
+            if (!res.ok) throw new Error(result.detail || 'Failed to send reset email');
+            alert(`Password reset email sent to ${user.email}`);
+        } catch (e: any) {
+            console.error('Failed to send reset password:', e);
+            alert(e?.message || 'Failed to send password reset email.');
         }
     };
 
@@ -506,6 +528,12 @@ const AdminUsersPage: React.FC = () => {
                                                                 {user.prefers_voice ? '🔊 Voice Mode ON' : 'Enable Voice Mode'}
                                                             </button>
                                                         )}
+                                                        <button
+                                                            onClick={() => handleResetPassword(user)}
+                                                            className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-[#212529] hover:bg-gray-50 transition-colors text-left"
+                                                        >
+                                                            <KeyRound size={14} className="text-gray-400" /> Reset Password
+                                                        </button>
                                                         <div className="border-t border-gray-100 my-1" />
                                                         <button
                                                             onClick={() => handleDeleteUser(user)}
@@ -613,6 +641,26 @@ const AdminUsersPage: React.FC = () => {
                                 />
                             </div>
                             <div>
+                                <label className="block text-[10px] font-bold text-gray-400 mb-1.5 uppercase tracking-wider">Password</label>
+                                <div className="relative">
+                                    <input
+                                        type={showPassword ? 'text' : 'password'}
+                                        value={addForm.password}
+                                        onChange={e => setAddForm(f => ({ ...f, password: e.target.value }))}
+                                        placeholder="Set initial password (min 6 chars)..."
+                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-[#212529] outline-none focus:border-[#2B5797] focus:ring-2 focus:ring-[#2B5797]/10 transition-all pr-11"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(p => !p)}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#2B5797] transition-colors"
+                                    >
+                                        {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                    </button>
+                                </div>
+                                <p className="text-[10px] text-gray-400 mt-1">User can reset their password later from the login page</p>
+                            </div>
+                            <div>
                                 <label className="block text-[10px] font-bold text-gray-400 mb-1.5 uppercase tracking-wider">Role</label>
                                 <div className="flex gap-2">
                                     {[{ value: 'student', label: 'Student' }, { value: 'faculty', label: 'Faculty' }, { value: 'admin', label: 'Admin' }].map(r => (
@@ -639,7 +687,7 @@ const AdminUsersPage: React.FC = () => {
                             </button>
                             <button
                                 onClick={handleAddUser}
-                                disabled={!addForm.name.trim() || !addForm.email.trim() || addLoading}
+                                disabled={!addForm.name.trim() || !addForm.email.trim() || !addForm.password.trim() || addForm.password.length < 6 || addLoading}
                                 className="flex-1 px-4 py-2.5 bg-[#2B5797] text-white rounded-xl text-sm font-semibold hover:bg-[#1e3f6e] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {addLoading ? 'Creating...' : 'Create User'}

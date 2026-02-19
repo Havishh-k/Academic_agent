@@ -291,7 +291,7 @@ async def create_user(request: CreateUserRequest):
 
 class ResetPasswordRequest(BaseModel):
     email: str
-    redirect_to: str = "http://localhost:5173/login"
+    redirect_to: str = "https://academic-agent-git-main-havishh-ks-projects.vercel.app/login"
 
 
 @router.post("/reset-password")

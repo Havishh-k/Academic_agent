@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-const FASTAPI_BASE = 'http://localhost:8000';
+const FASTAPI_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 interface QuizQuestion {
     id: number;

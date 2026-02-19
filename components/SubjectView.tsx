@@ -7,6 +7,8 @@ import FileUploadPanel from './FileUploadPanel';
 import { sendMessageToTutor } from '../services/tutorAgent';
 import { VoiceButton, TTSToggle, speakText, stopSpeaking } from './VoiceButton';
 
+const FASTAPI_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
 interface SubjectViewProps {
     subject: Subject;
     userRole: UserRole;
@@ -70,8 +72,8 @@ const SubjectView: React.FC<SubjectViewProps> = ({ subject, userRole, studentId,
         setQuizLoading(true);
         try {
             const [quizRes, histRes] = await Promise.all([
-                fetch(`http://localhost:8000/api/quiz/list/${subject.id}?published_only=true`),
-                fetch(`http://localhost:8000/api/quiz/history/${studentId}?subject_id=${subject.id}`),
+                fetch(`${FASTAPI_BASE}/api/quiz/list/${subject.id}?published_only=true`),
+                fetch(`${FASTAPI_BASE}/api/quiz/history/${studentId}?subject_id=${subject.id}`),
             ]);
             if (quizRes.ok) {
                 const data = await quizRes.json();
@@ -102,7 +104,7 @@ const SubjectView: React.FC<SubjectViewProps> = ({ subject, userRole, studentId,
                 question_index: parseInt(idx),
                 selected_option: opt,
             }));
-            const res = await fetch('http://localhost:8000/api/quiz/attempt', {
+            const res = await fetch(`${FASTAPI_BASE}/api/quiz/attempt`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

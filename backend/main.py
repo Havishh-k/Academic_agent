@@ -15,15 +15,23 @@ app = FastAPI(
     version="3.0.0",
 )
 
-# CORS — allow any localhost port in dev (regex), plus explicit origins
+# CORS — allow Vercel production + localhost dev
+import os as _os
+_frontend_url = _os.getenv("FRONTEND_URL", "")
+_origins = [
+    "http://localhost:5173",
+    "http://localhost:5174",
+    "http://localhost:3000",
+    "http://localhost:3001",
+    "http://localhost:8501",
+    "https://academic-agent-neon.vercel.app",
+]
+if _frontend_url:
+    _origins.append(_frontend_url)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://localhost:5174",
-        "http://localhost:3000",
-        "http://localhost:8501",
-    ],
+    allow_origins=_origins,
     allow_origin_regex=r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$",
     allow_credentials=True,
     allow_methods=["*"],

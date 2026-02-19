@@ -447,7 +447,7 @@ const FacultyMaterialsPage: React.FC<{
 // ═══════════════════════════════════════════════════════════════
 //  QUIZ GENERATOR
 // ═══════════════════════════════════════════════════════════════
-const FASTAPI_BASE = 'http://localhost:8000';
+const FASTAPI_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 interface QuizQuestion {
     question: string;

@@ -40,11 +40,35 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, activeNavId =
 //  ADMIN OVERVIEW
 // ═══════════════════════════════════════════════════════════════
 const AdminOverviewPage: React.FC<{ onNavClick: (id: NavId) => void }> = ({ onNavClick }) => {
+    const [stats, setStats] = useState({ students: 0, faculty: 0, subjects: 0, documents: 0 });
+
+    useEffect(() => {
+        const fetchStats = async () => {
+            try {
+                const [studentsRes, facultyRes, subjectsRes, docsRes] = await Promise.all([
+                    supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('role', 'student'),
+                    supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('role', 'faculty'),
+                    supabase.from('subjects').select('id', { count: 'exact', head: true }),
+                    supabase.from('knowledge_base').select('id', { count: 'exact', head: true }),
+                ]);
+                setStats({
+                    students: studentsRes.count || 0,
+                    faculty: facultyRes.count || 0,
+                    subjects: subjectsRes.count || 0,
+                    documents: docsRes.count || 0,
+                });
+            } catch (e) {
+                console.error('Failed to fetch stats:', e);
+            }
+        };
+        fetchStats();
+    }, []);
+
     const statCards = [
-        { label: 'Students', value: '7', icon: GraduationCap, color: '#2B5797', bg: '#E8F0FE', dot: '#2B5797', navTo: 'users' as NavId },
-        { label: 'Faculty', value: '6', icon: Users, color: '#4CAF50', bg: '#E8F5E9', dot: '#4CAF50', navTo: 'users' as NavId },
-        { label: 'Subjects', value: '6', icon: BookOpen, color: '#FF9800', bg: '#FFF3E0', dot: '#FF9800', navTo: 'subjects' as NavId },
-        { label: 'Documents', value: '236', icon: FileText, color: '#6264A7', bg: '#F3E5F5', dot: '#6264A7', navTo: 'subjects' as NavId },
+        { label: 'Students', value: String(stats.students), icon: GraduationCap, color: '#2B5797', bg: '#E8F0FE', dot: '#2B5797', navTo: 'users' as NavId },
+        { label: 'Faculty', value: String(stats.faculty), icon: Users, color: '#4CAF50', bg: '#E8F5E9', dot: '#4CAF50', navTo: 'users' as NavId },
+        { label: 'Subjects', value: String(stats.subjects), icon: BookOpen, color: '#FF9800', bg: '#FFF3E0', dot: '#FF9800', navTo: 'subjects' as NavId },
+        { label: 'Documents', value: String(stats.documents), icon: FileText, color: '#6264A7', bg: '#F3E5F5', dot: '#6264A7', navTo: 'subjects' as NavId },
     ];
 
     return (
@@ -200,62 +224,133 @@ const AdminOverviewPage: React.FC<{ onNavClick: (id: NavId) => void }> = ({ onNa
     );
 };
 
-
 // ═══════════════════════════════════════════════════════════════
-//  USER MANAGEMENT — FULLY FUNCTIONAL
+//  USER MANAGEMENT — SYNCED WITH SUPABASE
 // ═══════════════════════════════════════════════════════════════
-const allUsers = [
-    { name: 'System Admin', email: 'admin@vsit.edu.in', role: 'Admin', status: 'Active', joined: '01/01/2026', voiceMode: false },
-    { name: 'Dr. Priya Sharma', email: 'priya.sharma@vsit.edu.in', role: 'Faculty', status: 'Active', joined: '15/01/2026', voiceMode: false },
-    { name: 'Arjun Patel', email: 'arjun.patel@vsit.edu.in', role: 'Student', status: 'Active', joined: '20/01/2026', voiceMode: false },
-    { name: 'Prof. Rahul Desai', email: 'rahul.desai@vsit.edu.in', role: 'Faculty', status: 'Active', joined: '15/01/2026', voiceMode: false },
-    { name: 'Neha Kulkarni', email: 'neha.k@vsit.edu.in', role: 'Student', status: 'Inactive', joined: '22/01/2026', voiceMode: true },
-    { name: 'Omprakash Jaat', email: 'jaat.omprakash@vsit.edu.in', role: 'Faculty', status: 'Active', joined: '10/01/2026', voiceMode: false },
-    { name: 'Havish K', email: 'havish.k@vsit.edu.in', role: 'Student', status: 'Active', joined: '18/01/2026', voiceMode: false },
-];
 
-type UserType = typeof allUsers[0];
+interface UserRecord {
+    id: string;
+    email: string;
+    full_name: string;
+    role: string; // 'student' | 'faculty' | 'admin'
+    prefers_voice: boolean;
+    created_at: string;
+}
 
 const AdminUsersPage: React.FC = () => {
     const [activeFilter, setActiveFilter] = useState('All');
     const [searchQuery, setSearchQuery] = useState('');
-    const [viewUser, setViewUser] = useState<UserType | null>(null);
-    const [moreUser, setMoreUser] = useState<number | null>(null);
+    const [viewUser, setViewUser] = useState<UserRecord | null>(null);
+    const [moreUser, setMoreUser] = useState<string | null>(null);
     const [showAddUser, setShowAddUser] = useState(false);
-    const [users, setUsers] = useState(allUsers);
-    const [addForm, setAddForm] = useState({ name: '', email: '', role: 'Student' });
+    const [users, setUsers] = useState<UserRecord[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [addForm, setAddForm] = useState({ name: '', email: '', role: 'student' });
+    const [addError, setAddError] = useState('');
+    const [addLoading, setAddLoading] = useState(false);
 
-    // Filter + Search logic
-    const filterMap: Record<string, string> = { 'All': '', 'Students': 'Student', 'Faculty': 'Faculty', 'Admins': 'Admin' };
+    // Fetch all users from Supabase profiles table
+    const fetchUsers = async () => {
+        setLoading(true);
+        try {
+            const { data, error } = await supabase
+                .from('profiles')
+                .select('id, email, full_name, role, prefers_voice, created_at')
+                .order('created_at', { ascending: false });
+            if (error) throw error;
+            setUsers(data || []);
+        } catch (e) {
+            console.error('Failed to fetch users:', e);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => { fetchUsers(); }, []);
+
+    // Display helpers
+    const roleLabel = (r: string) => r === 'admin' ? 'Admin' : r === 'faculty' ? 'Faculty' : 'Student';
+    const filterMap: Record<string, string> = { 'All': '', 'Students': 'student', 'Faculty': 'faculty', 'Admins': 'admin' };
+
     const filteredUsers = users.filter(u => {
         const matchesRole = activeFilter === 'All' || u.role === filterMap[activeFilter];
         const q = searchQuery.toLowerCase();
-        const matchesSearch = !q || u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q);
+        const matchesSearch = !q || u.full_name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q);
         return matchesRole && matchesSearch;
     });
 
-    const handleToggleStatus = (idx: number) => {
-        setUsers(prev => prev.map((u, i) => i === idx ? { ...u, status: u.status === 'Active' ? 'Inactive' : 'Active' } : u));
+    const handleToggleVoiceMode = async (user: UserRecord) => {
+        const newVal = !user.prefers_voice;
+        setUsers(prev => prev.map(u => u.id === user.id ? { ...u, prefers_voice: newVal } : u));
         setMoreUser(null);
-    };
-
-    const handleDeleteUser = (idx: number) => {
-        if (confirm(`Are you sure you want to remove ${users[idx].name}?`)) {
-            setUsers(prev => prev.filter((_, i) => i !== idx));
+        try {
+            const { error } = await supabase.from('profiles').update({ prefers_voice: newVal }).eq('id', user.id);
+            if (error) throw error;
+        } catch (e) {
+            console.error('Failed to toggle voice mode:', e);
+            setUsers(prev => prev.map(u => u.id === user.id ? { ...u, prefers_voice: !newVal } : u));
         }
-        setMoreUser(null);
     };
 
-    const handleAddUser = () => {
+    const handleAddUser = async () => {
         if (!addForm.name.trim() || !addForm.email.trim()) return;
-        setUsers(prev => [...prev, { ...addForm, status: 'Active', joined: new Date().toLocaleDateString('en-GB'), voiceMode: false }]);
-        setAddForm({ name: '', email: '', role: 'Student' });
-        setShowAddUser(false);
+        setAddLoading(true);
+        setAddError('');
+        try {
+            // Create user in Supabase Auth (via admin API or direct insert)
+            // Since we can't call admin API from client, we insert into profiles directly
+            // The user will need to sign up through the login page for auth
+            const { data: existing } = await supabase.from('profiles').select('id').eq('email', addForm.email.trim()).single();
+            if (existing) {
+                setAddError('A user with this email already exists.');
+                setAddLoading(false);
+                return;
+            }
+
+            const { error } = await supabase.from('profiles').insert({
+                id: crypto.randomUUID(),
+                email: addForm.email.trim(),
+                full_name: addForm.name.trim(),
+                role: addForm.role,
+                prefers_voice: false,
+            });
+            if (error) throw error;
+
+            setAddForm({ name: '', email: '', role: 'student' });
+            setShowAddUser(false);
+            await fetchUsers();
+        } catch (e: any) {
+            console.error('Failed to add user:', e);
+            setAddError(e?.message || 'Failed to create user. Please try again.');
+        } finally {
+            setAddLoading(false);
+        }
     };
 
-    const handleToggleVoiceMode = (idx: number) => {
-        setUsers(prev => prev.map((u, i) => i === idx ? { ...u, voiceMode: !u.voiceMode } : u));
+    const handleDeleteUser = async (user: UserRecord) => {
+        if (!confirm(`Are you sure you want to remove ${user.full_name}?`)) return;
         setMoreUser(null);
+        try {
+            // Remove from role-specific table first
+            if (user.role === 'student') {
+                await supabase.from('students').delete().eq('user_id', user.id);
+            } else if (user.role === 'faculty') {
+                await supabase.from('faculty').delete().eq('user_id', user.id);
+            }
+            // Remove from profiles
+            const { error } = await supabase.from('profiles').delete().eq('id', user.id);
+            if (error) throw error;
+            setUsers(prev => prev.filter(u => u.id !== user.id));
+        } catch (e) {
+            console.error('Failed to delete user:', e);
+            alert('Failed to delete user. They may have related data that needs to be removed first.');
+        }
+    };
+
+    const formatDate = (iso: string) => {
+        try {
+            return new Date(iso).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        } catch { return '—'; }
     };
 
     return (
@@ -273,7 +368,7 @@ const AdminUsersPage: React.FC = () => {
                         </div>
                     </div>
                     <button
-                        onClick={() => setShowAddUser(true)}
+                        onClick={() => { setShowAddUser(true); setAddError(''); }}
                         className="flex items-center gap-2 px-4 py-2.5 bg-[#2B5797] text-white rounded-lg text-sm font-semibold hover:bg-[#1e3f6e] transition-colors shadow-sm active:scale-[0.98]"
                     >
                         <Plus size={16} /> Add User
@@ -323,12 +418,19 @@ const AdminUsersPage: React.FC = () => {
                                 <th className="text-left px-6 py-3.5 text-[10px] font-bold text-gray-400 uppercase tracking-wider">User</th>
                                 <th className="text-left px-6 py-3.5 text-[10px] font-bold text-gray-400 uppercase tracking-wider hidden sm:table-cell">Email</th>
                                 <th className="text-left px-6 py-3.5 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Role</th>
-                                <th className="text-left px-6 py-3.5 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Status</th>
+                                <th className="text-left px-6 py-3.5 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Joined</th>
                                 <th className="text-center px-6 py-3.5 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
-                            {filteredUsers.length === 0 ? (
+                            {loading ? (
+                                <tr>
+                                    <td colSpan={5} className="px-6 py-12 text-center">
+                                        <div className="w-6 h-6 border-2 border-[#2B5797] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+                                        <p className="text-sm text-gray-400">Loading users...</p>
+                                    </td>
+                                </tr>
+                            ) : filteredUsers.length === 0 ? (
                                 <tr>
                                     <td colSpan={5} className="px-6 py-12 text-center">
                                         <Search size={24} className="text-gray-300 mx-auto mb-3" />
@@ -338,108 +440,92 @@ const AdminUsersPage: React.FC = () => {
                                         </p>
                                     </td>
                                 </tr>
-                            ) : filteredUsers.map((user, i) => {
-                                const globalIdx = users.indexOf(user);
-                                return (
-                                    <tr key={globalIdx} className="hover:bg-gray-50/80 transition-colors">
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-3">
-                                                <div className={`w-9 h-9 rounded-full font-bold text-xs flex items-center justify-center ${user.role === 'Admin' ? 'bg-purple-50 text-purple-600'
-                                                    : user.role === 'Faculty' ? 'bg-green-50 text-green-600'
-                                                        : 'bg-[#E8F0FE] text-[#2B5797]'
-                                                    }`}>
-                                                    {user.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                                                </div>
-                                                <span className="text-sm font-semibold text-[#212529]">{user.name}</span>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4 text-sm text-[#6C757D] hidden sm:table-cell">{user.email}</td>
-                                        <td className="px-6 py-4">
-                                            <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wide ${user.role === 'Admin' ? 'bg-purple-50 text-purple-600'
-                                                : user.role === 'Faculty' ? 'bg-green-50 text-green-600'
-                                                    : 'bg-blue-50 text-[#2B5797]'
+                            ) : filteredUsers.map((user) => (
+                                <tr key={user.id} className="hover:bg-gray-50/80 transition-colors">
+                                    <td className="px-6 py-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className={`w-9 h-9 rounded-full font-bold text-xs flex items-center justify-center ${user.role === 'admin' ? 'bg-purple-50 text-purple-600'
+                                                : user.role === 'faculty' ? 'bg-green-50 text-green-600'
+                                                    : 'bg-[#E8F0FE] text-[#2B5797]'
                                                 }`}>
-                                                {user.role}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-1.5">
-                                                <div className={`w-2 h-2 rounded-full ${user.status === 'Active' ? 'bg-green-500' : 'bg-gray-300'}`} />
-                                                <span className="text-xs text-gray-500">{user.status}</span>
+                                                {user.full_name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
                                             </div>
-                                        </td>
-                                        <td className="px-6 py-4 text-center">
-                                            <div className="flex items-center justify-center gap-1 relative">
+                                            <span className="text-sm font-semibold text-[#212529]">{user.full_name}</span>
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4 text-sm text-[#6C757D] hidden sm:table-cell">{user.email}</td>
+                                    <td className="px-6 py-4">
+                                        <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wide ${user.role === 'admin' ? 'bg-purple-50 text-purple-600'
+                                            : user.role === 'faculty' ? 'bg-green-50 text-green-600'
+                                                : 'bg-blue-50 text-[#2B5797]'
+                                            }`}>
+                                            {roleLabel(user.role)}
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <span className="text-xs text-gray-500">{formatDate(user.created_at)}</span>
+                                    </td>
+                                    <td className="px-6 py-4 text-center">
+                                        <div className="flex items-center justify-center gap-1 relative">
+                                            <button
+                                                onClick={() => setViewUser(user)}
+                                                className="p-1.5 text-gray-400 hover:text-[#2B5797] hover:bg-[#E8F0FE] rounded-lg transition-all" title="View Details"
+                                            >
+                                                <Eye size={14} />
+                                            </button>
+                                            <button
+                                                onClick={() => window.open(`mailto:${user.email}`, '_blank')}
+                                                className="p-1.5 text-gray-400 hover:text-[#2B5797] hover:bg-[#E8F0FE] rounded-lg transition-all" title="Send Email"
+                                            >
+                                                <Mail size={14} />
+                                            </button>
+                                            <div className="relative">
                                                 <button
-                                                    onClick={() => setViewUser(user)}
-                                                    className="p-1.5 text-gray-400 hover:text-[#2B5797] hover:bg-[#E8F0FE] rounded-lg transition-all" title="View Details"
+                                                    onClick={() => setMoreUser(moreUser === user.id ? null : user.id)}
+                                                    className="p-1.5 text-gray-400 hover:text-[#D13438] hover:bg-red-50 rounded-lg transition-all" title="More Actions"
                                                 >
-                                                    <Eye size={14} />
+                                                    <MoreHorizontal size={14} />
                                                 </button>
-                                                <button
-                                                    onClick={() => window.open(`mailto:${user.email}`, '_blank')}
-                                                    className="p-1.5 text-gray-400 hover:text-[#2B5797] hover:bg-[#E8F0FE] rounded-lg transition-all" title="Send Email"
-                                                >
-                                                    <Mail size={14} />
-                                                </button>
-                                                <div className="relative">
-                                                    <button
-                                                        onClick={() => setMoreUser(moreUser === globalIdx ? null : globalIdx)}
-                                                        className="p-1.5 text-gray-400 hover:text-[#D13438] hover:bg-red-50 rounded-lg transition-all" title="More Actions"
-                                                    >
-                                                        <MoreHorizontal size={14} />
-                                                    </button>
-                                                    {/* Dropdown */}
-                                                    {moreUser === globalIdx && (
-                                                        <div className="absolute right-0 top-8 z-50 w-44 bg-white border border-gray-200 rounded-xl shadow-xl py-1.5 animate-in fade-in">
+                                                {moreUser === user.id && (
+                                                    <div className="absolute right-0 top-8 z-50 w-44 bg-white border border-gray-200 rounded-xl shadow-xl py-1.5 animate-in fade-in">
+                                                        <button
+                                                            onClick={() => { setViewUser(user); setMoreUser(null); }}
+                                                            className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-[#212529] hover:bg-gray-50 transition-colors text-left"
+                                                        >
+                                                            <Eye size={14} className="text-gray-400" /> View Profile
+                                                        </button>
+                                                        {user.role === 'student' && (
                                                             <button
-                                                                onClick={() => { setViewUser(user); setMoreUser(null); }}
-                                                                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-[#212529] hover:bg-gray-50 transition-colors text-left"
+                                                                onClick={() => handleToggleVoiceMode(user)}
+                                                                className={`w-full flex items-center gap-2.5 px-4 py-2.5 text-sm transition-colors text-left ${user.prefers_voice
+                                                                    ? 'text-[#2B5797] hover:bg-[#E8F0FE] font-medium'
+                                                                    : 'text-[#212529] hover:bg-gray-50'
+                                                                    }`}
                                                             >
-                                                                <Eye size={14} className="text-gray-400" /> View Profile
+                                                                <Volume2 size={14} className={user.prefers_voice ? 'text-[#2B5797]' : 'text-gray-400'} />
+                                                                {user.prefers_voice ? '🔊 Voice Mode ON' : 'Enable Voice Mode'}
                                                             </button>
-                                                            <button
-                                                                onClick={() => handleToggleStatus(globalIdx)}
-                                                                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-[#212529] hover:bg-gray-50 transition-colors text-left"
-                                                            >
-                                                                <UserCheck size={14} className="text-gray-400" />
-                                                                {user.status === 'Active' ? 'Deactivate' : 'Activate'}
-                                                            </button>
-                                                            {user.role === 'Student' && (
-                                                                <button
-                                                                    onClick={() => handleToggleVoiceMode(globalIdx)}
-                                                                    className={`w-full flex items-center gap-2.5 px-4 py-2.5 text-sm transition-colors text-left ${user.voiceMode
-                                                                        ? 'text-[#2B5797] hover:bg-[#E8F0FE] font-medium'
-                                                                        : 'text-[#212529] hover:bg-gray-50'
-                                                                        }`}
-                                                                >
-                                                                    <Volume2 size={14} className={user.voiceMode ? 'text-[#2B5797]' : 'text-gray-400'} />
-                                                                    {user.voiceMode ? '🔊 Voice Mode ON' : 'Enable Voice Mode'}
-                                                                </button>
-                                                            )}
-                                                            <div className="border-t border-gray-100 my-1" />
-                                                            <button
-                                                                onClick={() => handleDeleteUser(globalIdx)}
-                                                                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-[#D13438] hover:bg-red-50 transition-colors text-left"
-                                                            >
-                                                                <AlertCircle size={14} /> Remove User
-                                                            </button>
-                                                        </div>
-                                                    )}
-                                                </div>
+                                                        )}
+                                                        <div className="border-t border-gray-100 my-1" />
+                                                        <button
+                                                            onClick={() => handleDeleteUser(user)}
+                                                            className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-[#D13438] hover:bg-red-50 transition-colors text-left"
+                                                        >
+                                                            <AlertCircle size={14} /> Remove User
+                                                        </button>
+                                                    </div>
+                                                )}
                                             </div>
-                                        </td>
-                                    </tr>
-                                );
-                            })}
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
                         </tbody>
                     </table>
                 </div>
                 <div className="px-6 py-3 bg-gray-50/50 border-t border-gray-100 flex items-center justify-between">
                     <span className="text-xs text-gray-400">Showing {filteredUsers.length} of {users.length} users</span>
-                    <div className="flex gap-1">
-                        <button className="px-3 py-1.5 text-xs font-medium text-[#2B5797] bg-[#E8F0FE] rounded-lg">1</button>
-                    </div>
+                    <button onClick={fetchUsers} className="text-xs text-[#2B5797] font-semibold hover:underline">↻ Refresh</button>
                 </div>
             </div>
 
@@ -447,28 +533,26 @@ const AdminUsersPage: React.FC = () => {
             {viewUser && (
                 <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setViewUser(null)}>
                     <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-0 overflow-hidden" onClick={e => e.stopPropagation()}>
-                        {/* Modal Header */}
                         <div className="bg-gradient-to-r from-[#1a3a6e] to-[#2B5797] p-6 text-white">
                             <div className="flex items-center gap-4">
-                                <div className={`w-14 h-14 rounded-full font-bold text-lg flex items-center justify-center border-2 border-white/30 ${viewUser.role === 'Admin' ? 'bg-purple-500'
-                                    : viewUser.role === 'Faculty' ? 'bg-green-500'
+                                <div className={`w-14 h-14 rounded-full font-bold text-lg flex items-center justify-center border-2 border-white/30 ${viewUser.role === 'admin' ? 'bg-purple-500'
+                                    : viewUser.role === 'faculty' ? 'bg-green-500'
                                         : 'bg-white/20'
                                     }`}>
-                                    {viewUser.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                                    {viewUser.full_name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
                                 </div>
                                 <div>
-                                    <h3 className="text-lg font-bold">{viewUser.name}</h3>
+                                    <h3 className="text-lg font-bold">{viewUser.full_name}</h3>
                                     <p className="text-white/70 text-sm">{viewUser.email}</p>
                                 </div>
                             </div>
                         </div>
-                        {/* Modal Body */}
                         <div className="p-6 space-y-4">
                             {[
-                                { label: 'Role', value: viewUser.role },
-                                { label: 'Status', value: viewUser.status },
+                                { label: 'Role', value: roleLabel(viewUser.role) },
                                 { label: 'Email', value: viewUser.email },
-                                { label: 'Joined', value: viewUser.joined },
+                                { label: 'Joined', value: formatDate(viewUser.created_at) },
+                                { label: 'Voice Mode', value: viewUser.prefers_voice ? '🔊 Enabled' : 'Disabled' },
                             ].map((field, i) => (
                                 <div key={i} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
                                     <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">{field.label}</span>
@@ -482,7 +566,6 @@ const AdminUsersPage: React.FC = () => {
                                 <Mail size={16} /> Send Email
                             </button>
                         </div>
-                        {/* Modal Footer */}
                         <div className="px-6 pb-6">
                             <button
                                 onClick={() => setViewUser(null)}
@@ -501,9 +584,14 @@ const AdminUsersPage: React.FC = () => {
                     <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden" onClick={e => e.stopPropagation()}>
                         <div className="p-6 border-b border-gray-100">
                             <h3 className="text-lg font-bold text-[#212529]">Add New User</h3>
-                            <p className="text-xs text-[#6C757D] mt-1">Create a new account for a student, faculty, or admin</p>
+                            <p className="text-xs text-[#6C757D] mt-1">Create a new profile for a student, faculty, or admin</p>
                         </div>
                         <div className="p-6 space-y-4">
+                            {addError && (
+                                <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-600">
+                                    <AlertCircle size={14} /> {addError}
+                                </div>
+                            )}
                             <div>
                                 <label className="block text-[10px] font-bold text-gray-400 mb-1.5 uppercase tracking-wider">Full Name</label>
                                 <input
@@ -527,16 +615,16 @@ const AdminUsersPage: React.FC = () => {
                             <div>
                                 <label className="block text-[10px] font-bold text-gray-400 mb-1.5 uppercase tracking-wider">Role</label>
                                 <div className="flex gap-2">
-                                    {['Student', 'Faculty', 'Admin'].map(role => (
+                                    {[{ value: 'student', label: 'Student' }, { value: 'faculty', label: 'Faculty' }, { value: 'admin', label: 'Admin' }].map(r => (
                                         <button
-                                            key={role}
-                                            onClick={() => setAddForm(f => ({ ...f, role }))}
-                                            className={`flex-1 px-3 py-2.5 rounded-xl text-sm font-medium border transition-all ${addForm.role === role
+                                            key={r.value}
+                                            onClick={() => setAddForm(f => ({ ...f, role: r.value }))}
+                                            className={`flex-1 px-3 py-2.5 rounded-xl text-sm font-medium border transition-all ${addForm.role === r.value
                                                 ? 'bg-[#E8F0FE] text-[#2B5797] border-[#2B5797]/30'
                                                 : 'bg-gray-50 text-gray-500 border-gray-200 hover:border-gray-300'
                                                 }`}
                                         >
-                                            {role}
+                                            {r.label}
                                         </button>
                                     ))}
                                 </div>
@@ -551,10 +639,10 @@ const AdminUsersPage: React.FC = () => {
                             </button>
                             <button
                                 onClick={handleAddUser}
-                                disabled={!addForm.name.trim() || !addForm.email.trim()}
+                                disabled={!addForm.name.trim() || !addForm.email.trim() || addLoading}
                                 className="flex-1 px-4 py-2.5 bg-[#2B5797] text-white rounded-xl text-sm font-semibold hover:bg-[#1e3f6e] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                Create User
+                                {addLoading ? 'Creating...' : 'Create User'}
                             </button>
                         </div>
                     </div>

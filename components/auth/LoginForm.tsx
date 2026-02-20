@@ -58,15 +58,18 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToSignup, onLogin }) => {
     const [linkError, setLinkError] = useState<string | null>(null);
 
     // Listen for PASSWORD_RECOVERY event from Supabase
+    // IMPORTANT: Only show the recovery form when this event fires,
+    // because it guarantees a valid session exists for updateUser().
     useEffect(() => {
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+            console.log('LoginForm auth event:', event, session?.user?.email);
             if (event === 'PASSWORD_RECOVERY') {
                 setIsRecovery(true);
                 setShowForgot(false);
                 setLinkExpired(false);
             }
         });
-        // Check URL hash for recovery params or errors
+        // Check URL hash for error params only (expired link, etc.)
         const hash = window.location.hash;
         if (hash) {
             const hashParams = new URLSearchParams(hash.substring(1));
@@ -85,11 +88,8 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToSignup, onLogin }) => {
                 // Clean up the URL
                 window.history.replaceState({}, '', window.location.pathname);
             }
-            // Check for valid recovery token
-            else if (hash.includes('type=recovery') || hash.includes('type=magiclink')) {
-                setIsRecovery(true);
-                setShowForgot(false);
-            }
+            // NOTE: Do NOT manually set isRecovery from hash params!
+            // Wait for the PASSWORD_RECOVERY auth event which guarantees a session.
         }
         return () => subscription.unsubscribe();
     }, []);
@@ -114,8 +114,9 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToSignup, onLogin }) => {
             setRecoverySuccess(true);
             // Clear URL hash
             window.history.replaceState({}, '', window.location.pathname);
-            // After 3s, reset to login view
-            setTimeout(() => {
+            // After 3s, sign out the recovery session and return to login
+            setTimeout(async () => {
+                await supabase.auth.signOut();
                 setIsRecovery(false);
                 setRecoverySuccess(false);
                 setNewPassword('');

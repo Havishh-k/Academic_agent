@@ -62,18 +62,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         init();
 
         // Listen for auth changes (sign in / sign out)
+        let isRecoveryMode = false;
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
             async (event, session) => {
                 if (!mounted) return;
                 console.log('Auth event:', event, session?.user?.email);
 
+                // During password recovery, don't auto-login — let LoginForm handle it
+                if (event === 'PASSWORD_RECOVERY') {
+                    isRecoveryMode = true;
+                    return;
+                }
+
                 if (event === 'SIGNED_IN' && session?.user) {
+                    // Skip auto-login if we're in recovery mode
+                    if (isRecoveryMode) return;
                     const profile = await loadProfile(session.user.id);
                     if (mounted) {
                         setUser(profile);
                         setLoading(false);
                     }
                 } else if (event === 'SIGNED_OUT') {
+                    isRecoveryMode = false;
                     if (mounted) {
                         setUser(null);
                         setLoading(false);
